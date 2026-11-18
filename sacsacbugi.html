@@ -1,0 +1,2473 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SACSACBUGI (싹싹부기) - 한성대학교 초개인화 캠퍼스 플랫폼</title>
+  <!-- Pretendard 웹폰트 -->
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+            serif: ['Georgia', 'Cambria', '"Times New Roman"', 'Times', 'serif'],
+          },
+          colors: {
+            hsu: {
+              50: '#F2F6FF',
+              100: '#E4EDFF',
+              200: '#C8DAFF',
+              300: '#9BBAFF',
+              400: '#5E8BFF',
+              500: '#2563EB',
+              600: '#1D4ED8',
+              700: '#1E40AF',
+              800: '#1E3A8A',
+              900: '#172554',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 15% 20%, #DBEAFE 0%, #E8EEF7 45%, #E2E8F0 100%);
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    .animate-float {
+      animation: floatSlow 3.4s ease-in-out infinite;
+    }
+    @keyframes slideDownPush {
+      from { transform: translate(-50%, -140%); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+    .push-enter {
+      animation: slideDownPush 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes modalUp {
+      from { transform: translateY(100%); opacity: 0.5; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .sheet-up {
+      animation: modalUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .insta-badge {
+      background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+    }
+    /* P.I.G 사진동아리 포스터 그래픽 (PDF P.10 재현) */
+    .pig-poster-bg {
+      background:
+        radial-gradient(circle at 78% 18%, rgba(254, 249, 195, 0.55) 0%, rgba(254, 240, 138, 0.15) 28%, transparent 60%),
+        linear-gradient(180deg, #1b3b1a 0%, #2d5a27 42%, #4d7c32 68%, #659638 85%, #3f6212 100%);
+    }
+    /* 동아리 & 학습박람회 포스터 그래픽 (PDF P.10 재현) */
+    .expo-poster-bg {
+      background:
+        radial-gradient(circle at 20% 20%, #ffffff 0%, #e0f2fe 40%, #bae6fd 75%, #7dd3fc 100%);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-900 flex flex-col lg:flex-row items-center justify-center p-0 lg:p-6 gap-6">
+
+  <!-- 상단 고정 모드 전환 플로팅 바 (데스크톱 전용) -->
+  <div class="hidden lg:flex fixed top-4 right-6 z-50 items-center gap-2 bg-white/90 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-lg border border-slate-200/80">
+    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+    <span class="text-xs font-bold text-slate-700 mr-1">시연 환경 모드</span>
+    <button id="modeStudioBtn" onclick="setViewMode('studio')" class="px-3 py-1 rounded-xl text-xs font-extrabold bg-hsu-500 text-white transition">
+      발표자 스튜디오 + 앱
+    </button>
+    <button id="modeAppOnlyBtn" onclick="setViewMode('app')" class="px-3 py-1 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+      실제 앱 단독 화면
+    </button>
+    <button onclick="openGithubGuideModal()" class="ml-1 px-3 py-1 rounded-xl text-xs font-extrabold bg-slate-900 text-white hover:bg-slate-800 flex items-center gap-1.5 transition">
+      <i data-lucide="github" class="w-3.5 h-3.5"></i>
+      <span>GitHub 배포 가이드</span>
+    </button>
+  </div>
+
+  <!-- ================= 좌측: 발표자 시연 스튜디오 컨트롤러 (PC 화면) ================= -->
+  <aside id="showcasePanel" class="hidden lg:flex flex-col justify-between w-[420px] bg-white rounded-[32px] p-7 shadow-2xl border border-slate-200/80 h-[860px] shrink-0 overflow-y-auto no-scrollbar">
+    <div>
+      <!-- 배지 & 타이틀 -->
+      <div class="flex items-center justify-between mb-3">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-hsu-50 text-hsu-600 text-xs font-extrabold border border-hsu-200">
+          <span>HSU SACSACBUGI</span>
+          <span>·</span>
+          <span>VER.1.9.2</span>
+        </div>
+        <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+          ● Live Interactive
+        </span>
+      </div>
+
+      <h1 class="text-2xl font-black tracking-tight text-slate-900 leading-snug">
+        교내 정보를 <span class="text-hsu-500">'싹싹'</span> 모아주는<br/>
+        초개인화 플랫폼, <span class="text-hsu-500">싹싹부기</span>
+      </h1>
+      <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+        제2회 한성아이디어 경진대회 출품작 · <strong>팀 싹싹부기들</strong><br/>
+        우측 모바일 앱은 모든 버튼과 입력 폼, 학점 계산, 키워드 필터링이 실제로 동작하고 브라우저에 자동 저장됩니다.
+      </p>
+
+      <!-- 1. 페르소나 실시간 전환기 -->
+      <div class="mt-5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">1. 시연자 페르소나 전환 (실시간 연동)</span>
+          <span class="text-[10px] font-bold text-hsu-500">학점·키워드 자동변경</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button onclick="switchPersona('yeonseo')" id="pBtn-yeonseo" class="p-2 rounded-xl border text-left transition bg-hsu-500 text-white border-hsu-500">
+            <p class="text-xs font-extrabold">손연서 (24)</p>
+            <p class="text-[10px] opacity-85 truncate">기업경영·문콘</p>
+          </button>
+          <button onclick="switchPersona('taegyu')" id="pBtn-taegyu" class="p-2 rounded-xl border text-left transition bg-white text-slate-700 border-slate-200 hover:bg-slate-100">
+            <p class="text-xs font-extrabold">엄태규 (21)</p>
+            <p class="text-[10px] text-slate-400 truncate">4학년·졸업예정</p>
+          </button>
+          <button onclick="switchPersona('woohyeok')" id="pBtn-woohyeok" class="p-2 rounded-xl border text-left transition bg-white text-slate-700 border-slate-200 hover:bg-slate-100">
+            <p class="text-xs font-extrabold">이우혁 (25)</p>
+            <p class="text-[10px] text-slate-400 truncate">1학년·새내기</p>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. 화면 바로가기 네비게이터 -->
+      <div class="mt-4 space-y-1.5">
+        <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">2. 보고서 핵심 화면 바로가기</p>
+
+        <button onclick="showSplash()" class="w-full flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 hover:bg-hsu-50 border border-slate-200/80 transition group text-left">
+          <div class="flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-lg bg-slate-800 text-white flex items-center justify-center font-extrabold text-[11px]">00</span>
+            <div>
+              <p class="text-xs font-bold text-slate-800 group-hover:text-hsu-600">런처 스플래시 (보고서 표지 P.1)</p>
+              <p class="text-[10px] text-slate-400">3대 핵심 가치 카드 & 앱 시작하기</p>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-hsu-600"></i>
+        </button>
+
+        <button onclick="startAppAndOpenTab('tab-home')" class="w-full flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 hover:bg-hsu-50 border border-slate-200/80 transition group text-left">
+          <div class="flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-lg bg-hsu-500 text-white flex items-center justify-center font-extrabold text-[11px]">P1</span>
+            <div>
+              <p class="text-xs font-bold text-slate-800 group-hover:text-hsu-600">오늘의 부기 (초개인화 홈 · P.7)</p>
+              <p class="text-[10px] text-slate-400">D-DAY 추가 · 맞춤 브리핑 · 상상베이스 QR체크인</p>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-hsu-600"></i>
+        </button>
+
+        <button onclick="startAppAndOpenTab('tab-push')" class="w-full flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 hover:bg-hsu-50 border border-slate-200/80 transition group text-left">
+          <div class="flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-lg bg-hsu-500 text-white flex items-center justify-center font-extrabold text-[11px]">P2</span>
+            <div>
+              <p class="text-xs font-bold text-slate-800 group-hover:text-hsu-600">부기의 참견 (키워드 PUSH · P.8)</p>
+              <p class="text-[10px] text-slate-400">#동아리 #국가근로 #비교과 딥파싱 & 실시간 필터</p>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-hsu-600"></i>
+        </button>
+
+        <button onclick="startAppAndOpenTab('tab-academic')" class="w-full flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 hover:bg-hsu-50 border border-slate-200/80 transition group text-left">
+          <div class="flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-lg bg-hsu-500 text-white flex items-center justify-center font-extrabold text-[11px]">P3</span>
+            <div>
+              <p class="text-xs font-bold text-slate-800 group-hover:text-hsu-600">학사부기 (졸업요건 & 수업템플릿 · P.9)</p>
+              <p class="text-[10px] text-slate-400">1·2트랙 학점 시뮬레이터 · 서비스운영관리 상세</p>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-hsu-600"></i>
+        </button>
+
+        <button onclick="startAppAndOpenTab('tab-community')" class="w-full flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 hover:bg-hsu-50 border border-slate-200/80 transition group text-left">
+          <div class="flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-lg bg-hsu-500 text-white flex items-center justify-center font-extrabold text-[11px]">P4</span>
+            <div>
+              <p class="text-xs font-bold text-slate-800 group-hover:text-hsu-600">속닥부기 (팀빌딩 & 인스타 연동 · P.10)</p>
+              <p class="text-[10px] text-slate-400">캡스톤/공모전 매칭 · P.I.G 포스터 & 꿀팁 아카이브</p>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-hsu-600"></i>
+        </button>
+      </div>
+
+      <!-- 3. 실시간 키워드 크롤링 & PUSH 발송 시뮬레이터 -->
+      <div class="mt-4 p-4 rounded-2xl bg-gradient-to-br from-hsu-500 to-hsu-700 text-white shadow-md">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-extrabold text-blue-100 flex items-center gap-1">
+            <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+            3. 실시간 키워드 PUSH 발송 시연
+          </span>
+          <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-bold">SAVE 앱 벤치마킹</span>
+        </div>
+        <select id="pushPresetSelect" class="mt-2.5 w-full bg-white/15 border border-white/25 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none">
+          <option value="0" class="text-slate-900">[비교과·동아리] 2027학년도 1학기 동아리 & 학습박람회 행사 안내</option>
+          <option value="1" class="text-slate-900">[국가근로] 2026학년도 1학기 국가근로장학금 희망근로지 신청 안내</option>
+          <option value="2" class="text-slate-900">[공모전] 제2회 한성아이디어 경진대회 본선 진출팀 발표 및 시상 안내</option>
+          <option value="3" class="text-slate-900">[장학금] 성북문화원 지역문화 아카이빙 특별장학생 모집 공고</option>
+        </select>
+        <button onclick="triggerPushNotification()" class="mt-2.5 w-full py-2.5 bg-white text-hsu-600 rounded-xl text-xs font-extrabold shadow-sm hover:bg-blue-50 active:scale-[0.99] transition flex items-center justify-center gap-1.5">
+          <i data-lucide="bell-ring" class="w-4 h-4"></i>
+          <span>선택한 공지 실시간 PUSH 발송하기</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 하단 팀 정보 & 초기화 -->
+    <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+      <div>
+        <p class="font-extrabold text-slate-600">Team 싹싹부기들</p>
+        <p class="text-[10px]">엄태규 · 손연서 · 이우혁 · 윤채이</p>
+      </div>
+      <button onclick="resetAllAppData()" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 font-bold text-[11px] transition">
+        시연 데이터 초기화
+      </button>
+    </div>
+  </aside>
+
+  <!-- ================= 우측/중앙: 모바일 디바이스 프레임 ================= -->
+  <main class="w-full max-w-[430px] h-screen lg:h-[860px] bg-[#F2F6FF] lg:rounded-[46px] shadow-2xl border-0 lg:border-[10px] lg:border-slate-900 flex flex-col overflow-hidden relative shrink-0">
+
+    <!-- 상단 모바일 상태바 (9:41) -->
+    <div id="statusBar" class="bg-hsu-500 text-white px-6 pt-3 pb-2 flex items-center justify-between text-xs font-extrabold shrink-0 z-30 transition-colors duration-300">
+      <span id="statusTime">9:41</span>
+      <div class="hidden lg:block w-24 h-4 bg-black/25 rounded-full"></div>
+      <div class="flex items-center gap-1.5">
+        <i data-lucide="signal" class="w-3.5 h-3.5"></i>
+        <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+        <i data-lucide="battery-full" class="w-4 h-4"></i>
+      </div>
+    </div>
+
+    <!-- 앱 상단 실시간 PUSH 알림 배너 (SAVE 벤치마킹) -->
+    <div id="inAppPushBanner" onclick="handlePushBannerClick()" class="hidden absolute top-11 left-1/2 -translate-x-1/2 z-50 w-[92%] bg-white/95 backdrop-blur-md text-slate-900 p-3.5 rounded-2xl shadow-2xl border-2 border-hsu-500 cursor-pointer">
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-xl bg-hsu-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 3L2 21h20L12 3z"/></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-extrabold text-hsu-500 flex items-center gap-1">
+              <span>▲ 키워드 PUSH 알림</span>
+            </span>
+            <span class="text-[10px] font-bold text-slate-400">방금 전</span>
+          </div>
+          <p id="pushBannerTitle" class="text-xs font-extrabold text-slate-900 truncate mt-0.5">
+            2027학년도 1학기 동아리 & 학습박람회 행사 안내
+          </p>
+          <div class="flex items-center justify-between mt-1">
+            <span id="pushBannerTag" class="text-[11px] text-hsu-600 font-extrabold bg-hsu-50 px-2 py-0.5 rounded-md">비교과·동아리</span>
+            <span class="text-[10px] text-slate-400 font-semibold">탭하여 딥파싱 요약 보기 →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 토스트 알림창 -->
+    <div id="toastMsg" class="hidden absolute bottom-24 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white px-4 py-2.5 rounded-full text-xs font-bold shadow-xl flex items-center gap-2 whitespace-nowrap">
+      <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+      <span id="toastText">저장되었습니다.</span>
+    </div>
+
+    <!-- ================= [00] 스플래시 화면 (PDF P.1 완벽 재현) ================= -->
+    <div id="splashScreen" class="flex-1 bg-gradient-to-b from-hsu-500 via-hsu-600 to-blue-800 text-white flex flex-col justify-between p-6 relative overflow-hidden z-20">
+      <!-- 배경 원형 그래픽 -->
+      <div class="absolute -right-16 -top-10 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
+      <div class="absolute -left-16 bottom-20 w-72 h-72 rounded-full bg-blue-400/15 blur-2xl pointer-events-none"></div>
+
+      <!-- 상단 타이틀 + 상상부기 마스코트 -->
+      <div class="mt-2 relative z-10 flex items-start justify-between">
+        <div>
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/15 backdrop-blur-sm text-[11px] font-extrabold tracking-wider">
+            <span>HSU</span>
+            <span>·</span>
+            <span>VER.1.9.2</span>
+          </div>
+          <p class="text-base font-bold text-blue-100 mt-3">교내 정보를 '싹싹' 모아주는</p>
+          <h1 class="text-4xl font-black tracking-tight mt-0.5">SACSACBUGI</h1>
+        </div>
+
+        <!-- 상상부기 커스텀 SVG 캐릭터 -->
+        <div class="w-20 h-20 animate-float shrink-0" title="한성대학교 마스코트 상상부기">
+          <svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-lg">
+            <!-- 등딱지 -->
+            <ellipse cx="60" cy="66" rx="34" ry="30" fill="#1E3A8A" stroke="#ffffff" stroke-width="3"/>
+            <!-- 얼굴 -->
+            <circle cx="60" cy="48" r="26" fill="#60A5FA" stroke="#ffffff" stroke-width="3"/>
+            <!-- 학사모/베레모 -->
+            <polygon points="60,12 28,26 60,36 92,26" fill="#172554" stroke="#ffffff" stroke-width="2"/>
+            <line x1="86" y1="28" x2="90" y2="42" stroke="#FACC15" stroke-width="3" stroke-linecap="round"/>
+            <!-- 눈 -->
+            <circle cx="50" cy="46" r="4" fill="#0F172A"/>
+            <circle cx="70" cy="46" r="4" fill="#0F172A"/>
+            <circle cx="48.5" cy="44.5" r="1.5" fill="#ffffff"/>
+            <circle cx="68.5" cy="44.5" r="1.5" fill="#ffffff"/>
+            <!-- 볼터치 -->
+            <ellipse cx="42" cy="52" rx="4.5" ry="2.5" fill="#F472B6" opacity="0.7"/>
+            <ellipse cx="78" cy="52" rx="4.5" ry="2.5" fill="#F472B6" opacity="0.7"/>
+            <!-- 미소 -->
+            <path d="M 54 54 Q 60 60 66 54" fill="none" stroke="#0F172A" stroke-width="2.8" stroke-linecap="round"/>
+            <!-- 몸통 배 (HSU 로고) -->
+            <rect x="42" y="70" width="36" height="26" rx="12" fill="#EFF6FF" stroke="#ffffff" stroke-width="2"/>
+            <text x="60" y="87" text-anchor="middle" fill="#1D4ED8" font-size="11" font-weight="900" font-family="Pretendard, sans-serif">HSU</text>
+            <!-- 팔 -->
+            <ellipse cx="28" cy="74" rx="9" ry="6" transform="rotate(-25 28 74)" fill="#60A5FA" stroke="#ffffff" stroke-width="2.5"/>
+            <ellipse cx="92" cy="74" rx="9" ry="6" transform="rotate(25 92 74)" fill="#60A5FA" stroke="#ffffff" stroke-width="2.5"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 중앙 3대 핵심 가치 플로팅 카드 (PDF P.1 구성) -->
+      <div class="my-auto space-y-3 relative z-10">
+        <div onclick="startAppAndOpenTab('tab-home')" class="bg-white/95 text-slate-900 p-4 rounded-2xl shadow-lg flex items-center justify-between cursor-pointer hover:scale-[1.01] transition">
+          <div>
+            <span class="text-[10px] font-extrabold text-hsu-500 uppercase tracking-wider">SMART SCHEDULE</span>
+            <p class="text-sm font-extrabold mt-0.5">매일 확인하는 학사일정</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">수강신청 · 국가근로 D-Day 카운트다운</p>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-hsu-50 text-hsu-500 flex items-center justify-center font-black text-xs shrink-0 border border-hsu-200">
+            D-1
+          </div>
+        </div>
+
+        <div onclick="startAppAndOpenTab('tab-push')" class="bg-white/95 text-slate-900 p-4 rounded-2xl shadow-lg flex items-center justify-between ml-3 cursor-pointer hover:scale-[1.01] transition">
+          <div>
+            <span class="text-[10px] font-extrabold text-hsu-500 uppercase tracking-wider">ONLY FOR ME</span>
+            <p class="text-sm font-extrabold mt-0.5">초개인화 맞춤형 알림</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">#동아리 #국가근로 #비교과 실시간 필터링</p>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-hsu-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+            <i data-lucide="bell-ring" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <div onclick="startAppAndOpenTab('tab-community')" class="bg-white/95 text-slate-900 p-4 rounded-2xl shadow-lg flex items-center justify-between cursor-pointer hover:scale-[1.01] transition">
+          <div>
+            <span class="text-[10px] font-extrabold text-hsu-500 uppercase tracking-wider">ALL IN ONE</span>
+            <p class="text-sm font-extrabold mt-0.5">교내 프로그램 및 취업 정보</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">학교 홈페이지 · HIGH 시스템 · 인스타 통합</p>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-hsu-50 text-hsu-600 flex items-center justify-center font-black text-xs shrink-0 border border-hsu-200">
+            HSU
+          </div>
+        </div>
+      </div>
+
+      <!-- 하단 시작하기 CTA -->
+      <div class="relative z-10 space-y-2.5">
+        <button onclick="startApp()" class="w-full py-4 rounded-2xl bg-white text-hsu-600 font-black text-sm shadow-xl hover:bg-blue-50 active:scale-[0.99] transition flex items-center justify-center gap-2">
+          <span>싹싹부기 시작하기</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+        <div class="flex items-center justify-between text-[11px] text-blue-100/90 px-1">
+          <span>한성대 AI 맞춤형 통합 플랫폼</span>
+          <button onclick="openReportOverviewModal()" class="underline font-bold hover:text-white">기획서 요약 보기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 메인 앱 뷰 컨테이너 ================= -->
+    <div id="mainAppView" class="hidden flex-1 flex flex-col overflow-hidden bg-[#F2F6FF]">
+
+      <!-- 상단 앱 헤더 -->
+      <header class="bg-white px-5 py-3 border-b border-slate-200/80 flex items-center justify-between shrink-0 z-20">
+        <div onclick="showSplash()" class="flex items-center gap-2.5 cursor-pointer group" title="스플래시 화면으로 이동">
+          <div class="w-8 h-8 rounded-xl bg-hsu-500 text-white font-black text-xs flex items-center justify-center shadow-sm group-hover:bg-hsu-600 transition">
+            부기
+          </div>
+          <div>
+            <h1 id="headerTitle" class="font-extrabold text-[15px] text-slate-900 leading-none">오늘의 부기</h1>
+            <p id="headerSubtitle" class="text-[11px] text-slate-400 font-semibold mt-1 leading-none">초개인화 대시보드</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <!-- 실시간 알림 테스트 아이콘 -->
+          <button onclick="triggerPushNotification()" title="새 키워드 알림 수신 시연" class="p-2 rounded-full bg-slate-100 hover:bg-hsu-50 text-slate-600 hover:text-hsu-500 transition relative">
+            <i data-lucide="bell" class="w-4 h-4"></i>
+            <span id="headerBellDot" class="w-2 h-2 rounded-full bg-rose-500 absolute top-1.5 right-1.5 border border-white"></span>
+          </button>
+          <!-- 현재 접속 학우 페르소나 스위치 버튼 -->
+          <button onclick="cyclePersona()" id="personaChipBtn" class="px-3 py-1.5 rounded-full bg-hsu-50 text-hsu-600 text-xs font-extrabold border border-hsu-200 hover:bg-hsu-100 transition flex items-center gap-1">
+            <span id="personaChipText">연서님 (24)</span>
+            <i data-lucide="repeat" class="w-3 h-3"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- 메인 스크롤 영역 -->
+      <div id="mainScrollArea" class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4 pb-6">
+
+        <!-- ================= [P1] 오늘의 부기 (메인 홈 - PDF P.7) ================= -->
+        <section id="tab-home" class="tab-pane space-y-4">
+
+          <!-- 1. D-DAY 위젯 -->
+          <div>
+            <div class="flex items-center justify-between mb-2 px-1">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-extrabold text-slate-600">D-DAY 위젯</span>
+                <span class="text-[10px] font-bold text-hsu-500 bg-hsu-50 px-2 py-0.5 rounded-full border border-hsu-100">학사 필독</span>
+              </div>
+              <button onclick="openAddDdayModal()" class="text-xs font-extrabold text-hsu-500 hover:text-hsu-600 flex items-center gap-0.5">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>일정 추가</span>
+              </button>
+            </div>
+            <div id="ddayGrid" class="grid grid-cols-2 gap-2.5">
+              <!-- JS에서 동적 렌더링 (기본: 수강신청 D-3, 국가근로장학 D-6) -->
+            </div>
+          </div>
+
+          <!-- 2. 맞춤부기 브리핑 (PDF P.7 중앙 카드) -->
+          <div>
+            <div class="flex items-center justify-between mb-2 px-1">
+              <span class="text-xs font-extrabold text-slate-600">맞춤부기 브리핑</span>
+              <span class="text-[11px] font-bold text-hsu-500">AI 학사 비서 상상부기</span>
+            </div>
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-4 relative overflow-hidden">
+              <div class="flex items-start gap-3.5">
+                <!-- 미니 상상부기 SVG 아바타 -->
+                <div class="w-12 h-12 rounded-2xl bg-hsu-50 border border-hsu-200 flex items-center justify-center shrink-0">
+                  <svg viewBox="0 0 80 80" class="w-10 h-10">
+                    <circle cx="40" cy="42" r="22" fill="#3B82F6"/>
+                    <polygon points="40,12 16,24 40,32 64,24" fill="#1E3A8A"/>
+                    <circle cx="32" cy="40" r="3" fill="#0F172A"/>
+                    <circle cx="48" cy="40" r="3" fill="#0F172A"/>
+                    <ellipse cx="26" cy="45" rx="3.5" ry="2" fill="#F472B6" opacity="0.8"/>
+                    <ellipse cx="54" cy="45" rx="3.5" ry="2" fill="#F472B6" opacity="0.8"/>
+                    <path d="M 35 47 Q 40 52 45 47" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div onclick="openBriefingDetailModal()" class="flex-1 cursor-pointer group">
+                  <div class="flex items-center gap-1.5 mb-1">
+                    <span class="px-2 py-0.5 rounded-md bg-hsu-50 text-hsu-600 text-[10px] font-extrabold border border-hsu-100">
+                      맞춤 브리핑
+                    </span>
+                    <span id="briefingTrackBadge" class="text-[10px] font-bold text-slate-400">기업경영·문콘트랙</span>
+                  </div>
+                  <p id="briefingMainText" class="text-[14px] font-extrabold text-slate-900 group-hover:text-hsu-600 transition leading-snug">
+                    연서님, 신청하신 [점프업 프로젝트] <span class="text-hsu-500">D-1</span>입니다!
+                  </p>
+                  <p id="briefingSubText" class="text-[11px] text-slate-500 mt-1">
+                    탭하여 HIGH 비교과 결과보고서 제출 체크리스트 확인하기 →
+                  </p>
+                </div>
+              </div>
+
+              <!-- 필수 학사공지 바 -->
+              <div onclick="openBasketCheckModal()" class="pt-3.5 border-t border-slate-100 flex items-center justify-between cursor-pointer hover:bg-slate-50/70 -mx-2 px-2 py-1 rounded-xl transition">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                    <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <span class="text-[10px] font-extrabold text-slate-400 block">필수 학사공지</span>
+                    <p class="text-xs font-extrabold text-slate-800">수강신청 장바구니 사전 점검</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="px-3 py-1 rounded-xl bg-hsu-500 text-white text-xs font-black">D-1</span>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. 시설 예약 현황 (노쇼 방지 리마인더 - PDF P.7 하단 카드) -->
+          <div>
+            <div class="flex items-center justify-between mb-2 px-1">
+              <span class="text-xs font-extrabold text-slate-600">시설 예약 현황</span>
+              <button onclick="openFacilityModal('book')" class="text-xs font-extrabold text-hsu-500 hover:underline flex items-center gap-0.5">
+                <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                <span>신규 공간 예약</span>
+              </button>
+            </div>
+            <div id="facilityListContainer" class="space-y-2.5">
+              <!-- JS에서 동적 렌더링 (기본: 상상베이스 B108호 17:00~18:00) -->
+            </div>
+          </div>
+
+          <!-- 4. ALL IN ONE 교내 채널 원스톱 연동 & 실시간 열람실 좌석 -->
+          <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold text-slate-800">교내 통합 채널 & 실시간 캠퍼스</span>
+              <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">ALL IN ONE</span>
+            </div>
+
+            <!-- 실시간 도서관/상상베이스 혼잡도 -->
+            <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+              <div>
+                <div class="flex items-center justify-between text-[11px] font-bold">
+                  <span class="text-slate-600">학술정보관 열람실</span>
+                  <span class="text-hsu-600 font-extrabold">잔여 42석</span>
+                </div>
+                <div class="w-full h-1.5 bg-slate-200 rounded-full mt-1.5 overflow-hidden">
+                  <div class="bg-hsu-500 h-full rounded-full" style="width: 68%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-[11px] font-bold">
+                  <span class="text-slate-600">상상베이스 라운지</span>
+                  <span class="text-emerald-600 font-extrabold">여유 (34%)</span>
+                </div>
+                <div class="w-full h-1.5 bg-slate-200 rounded-full mt-1.5 overflow-hidden">
+                  <div class="bg-emerald-500 h-full rounded-full" style="width: 34%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 외부 공식 시스템 바로가기 4종 -->
+            <div class="grid grid-cols-4 gap-2 text-center">
+              <a href="https://www.hansung.ac.kr/hansung/6172/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGaGFuc3VuZyUyRjIxMjclMkZhcnRjbExpc3QuZG8lM0Y%3D" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-2xl bg-slate-50 hover:bg-hsu-50 border border-slate-200/60 transition">
+                <i data-lucide="globe" class="w-4 h-4 mx-auto text-hsu-500"></i>
+                <p class="text-[11px] font-extrabold text-slate-800 mt-1">한성공지</p>
+              </a>
+              <a href="https://hsportal.hansung.ac.kr/" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-2xl bg-slate-50 hover:bg-hsu-50 border border-slate-200/60 transition">
+                <i data-lucide="award" class="w-4 h-4 mx-auto text-hsu-500"></i>
+                <p class="text-[11px] font-extrabold text-slate-800 mt-1">HIGH시스템</p>
+              </a>
+              <a href="https://info.hansung.ac.kr/" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-2xl bg-slate-50 hover:bg-hsu-50 border border-slate-200/60 transition">
+                <i data-lucide="cpu" class="w-4 h-4 mx-auto text-hsu-500"></i>
+                <p class="text-[11px] font-extrabold text-slate-800 mt-1">종정시</p>
+              </a>
+              <a href="https://hsel.hansung.ac.kr/" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-2xl bg-slate-50 hover:bg-hsu-50 border border-slate-200/60 transition">
+                <i data-lucide="book-open" class="w-4 h-4 mx-auto text-hsu-500"></i>
+                <p class="text-[11px] font-extrabold text-slate-800 mt-1">학술정보관</p>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= [P2] 부기의 참견 (키워드 PUSH 알림 - PDF P.8) ================= -->
+        <section id="tab-push" class="tab-pane hidden space-y-4">
+
+          <!-- 나의 관심 키워드 설정 박스 -->
+          <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <h2 class="text-sm font-extrabold text-slate-900">나의 관심 키워드</h2>
+                <p class="text-[11px] text-slate-400">설정한 키워드가 포함된 공지만 즉시 PUSH 알림을 보냅니다</p>
+              </div>
+              <span class="px-2 py-0.5 rounded-md bg-hsu-50 text-hsu-600 text-[10px] font-extrabold border border-hsu-200">ONLY FOR ME</span>
+            </div>
+
+            <!-- 활성 키워드 칩 목록 -->
+            <div id="keywordChipsContainer" class="flex flex-wrap gap-1.5 my-3">
+              <!-- JS 렌더링 (#동아리, #국가근로, #비교과 등) -->
+            </div>
+
+            <!-- 신규 키워드 추가 입력창 -->
+            <form onsubmit="handleAddKeyword(event)" class="flex gap-2">
+              <input id="newKeywordInput" type="text" placeholder="관심 키워드 입력 (예: 장학금, 공모전, 학식)" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-hsu-500" />
+              <button type="submit" class="px-3.5 py-2 bg-hsu-500 text-white rounded-xl text-xs font-extrabold hover:bg-hsu-600 transition shrink-0">
+                + 추가
+              </button>
+            </form>
+
+            <!-- 추천 해시태그 빠른 추가 -->
+            <div class="mt-2.5 flex items-center gap-1.5 flex-wrap text-[11px]">
+              <span class="text-slate-400 font-bold">추천:</span>
+              <button onclick="quickAddKeyword('장학금')" class="text-slate-500 hover:text-hsu-600 font-semibold bg-slate-100 px-2 py-0.5 rounded-md">+ #장학금</button>
+              <button onclick="quickAddKeyword('공모전')" class="text-slate-500 hover:text-hsu-600 font-semibold bg-slate-100 px-2 py-0.5 rounded-md">+ #공모전</button>
+              <button onclick="quickAddKeyword('점프업')" class="text-slate-500 hover:text-hsu-600 font-semibold bg-slate-100 px-2 py-0.5 rounded-md">+ #점프업</button>
+              <button onclick="quickAddKeyword('해외연수')" class="text-slate-500 hover:text-hsu-600 font-semibold bg-slate-100 px-2 py-0.5 rounded-md">+ #해외연수</button>
+            </div>
+          </div>
+
+          <!-- 6대 관심 카테고리 명확화 탭 (PDF P.8) -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between px-1">
+              <span class="text-xs font-extrabold text-slate-600">관심 카테고리 필터</span>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="onlyMatchedToggle" onchange="renderNoticeList()" checked class="accent-blue-600 w-3.5 h-3.5 rounded" />
+                <span class="text-[11px] font-extrabold text-hsu-600">내 키워드 매칭만 보기</span>
+              </label>
+            </div>
+
+            <div id="categoryFilterBar" class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+              <button onclick="setNoticeCategory('전체')" data-cat="전체" class="cat-btn px-3 py-1.5 rounded-full text-xs font-extrabold bg-hsu-500 text-white shrink-0">전체</button>
+              <button onclick="setNoticeCategory('비교과·동아리')" data-cat="비교과·동아리" class="cat-btn px-3 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 shrink-0">비교과·동아리</button>
+              <button onclick="setNoticeCategory('국가근로')" data-cat="국가근로" class="cat-btn px-3 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 shrink-0">근로·취업</button>
+              <button onclick="setNoticeCategory('장학·등록')" data-cat="장학·등록" class="cat-btn px-3 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 shrink-0">장학·등록</button>
+              <button onclick="setNoticeCategory('학사')" data-cat="학사" class="cat-btn px-3 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 shrink-0">학사</button>
+              <button onclick="setNoticeCategory('시설')" data-cat="시설" class="cat-btn px-3 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 shrink-0">시설</button>
+            </div>
+          </div>
+
+          <!-- 키워드 PUSH 알림 카드 리스트 -->
+          <div id="noticeListContainer" class="space-y-2.5">
+            <!-- JS 동적 렌더링 -->
+          </div>
+        </section>
+
+        <!-- ================= [P3] 학사부기 (졸업 요건 & 로드맵 & 수업템플릿 - PDF P.9) ================= -->
+        <section id="tab-academic" class="tab-pane hidden space-y-4">
+
+          <!-- 1. 트랙별 졸업 요건 Progress 바 카드 (PDF P.9 상단 완벽 반영 + 시뮬레이션 연동) -->
+          <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-[11px] font-extrabold text-hsu-500">학사가이드 · 전공도우미</span>
+                <h2 class="text-base font-black text-slate-900 mt-0.5">트랙별 졸업 요건 Progress</h2>
+              </div>
+              <span id="simBadge" class="px-2.5 py-1 rounded-xl bg-hsu-50 text-hsu-600 text-[11px] font-extrabold border border-hsu-200">
+                실시간 시뮬레이션 ON
+              </span>
+            </div>
+
+            <!-- 1트랙 Progress -->
+            <div class="p-3.5 rounded-2xl bg-[#F8FAFF] border border-blue-100">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p id="track1Name" class="text-xs font-extrabold text-slate-800">1트랙 · 기업경영트랙</p>
+                  <p id="track1PercentText" class="text-[11px] font-bold text-hsu-500 mt-0.5">전공학점(85%)</p>
+                </div>
+                <div class="text-right">
+                  <span id="track1CreditText" class="text-lg font-black text-hsu-500">33/39</span>
+                  <span id="track1SimDelta" class="hidden text-[11px] font-extrabold text-emerald-600 block">+0학점 예정</span>
+                </div>
+              </div>
+              <div class="w-full h-2.5 bg-slate-200 rounded-full mt-2.5 overflow-hidden">
+                <div id="track1Bar" class="bg-hsu-500 h-full rounded-full transition-all duration-500" style="width: 85%"></div>
+              </div>
+            </div>
+
+            <!-- 2트랙 Progress -->
+            <div class="p-3.5 rounded-2xl bg-[#F8FAFF] border border-blue-100">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p id="track2Name" class="text-xs font-extrabold text-slate-800">2트랙 · 문학문화콘텐츠트랙</p>
+                  <p id="track2PercentText" class="text-[11px] font-bold text-hsu-500 mt-0.5">전공학점(100%)</p>
+                </div>
+                <div class="text-right">
+                  <span id="track2CreditText" class="text-lg font-black text-hsu-500">45/39</span>
+                  <span id="track2SimDelta" class="hidden text-[11px] font-extrabold text-emerald-600 block">+0학점 예정</span>
+                </div>
+              </div>
+              <div class="w-full h-2.5 bg-slate-200 rounded-full mt-2.5 overflow-hidden">
+                <div id="track2Bar" class="bg-hsu-500 h-full rounded-full transition-all duration-500" style="width: 100%"></div>
+              </div>
+            </div>
+
+            <!-- 비교과 HSU 포인트 & 총 학점 요약 -->
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/60 flex items-center justify-between">
+                <span class="text-[11px] font-bold text-slate-500">비교과 포인트</span>
+                <strong class="text-xs font-black text-slate-800">720 / 800 P</strong>
+              </div>
+              <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/60 flex items-center justify-between">
+                <span class="text-[11px] font-bold text-slate-500">총 이수학점</span>
+                <strong id="totalCreditSummary" class="text-xs font-black text-hsu-600">114 / 130학점</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. 학기별 맞춤형 수강 로드맵 & 과목별 상세 수업 템플릿 (PDF P.9 하단) -->
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between px-1">
+              <div>
+                <span class="text-xs font-extrabold text-slate-700">과목별 상세 수업 템플릿 & 학점 시뮬레이터</span>
+                <p class="text-[11px] text-slate-400">과목을 클릭해 상세 템플릿을 보거나 [+수강예정]으로 학점을 계산해보세요</p>
+              </div>
+            </div>
+
+            <!-- 트랙 필터 버튼 -->
+            <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
+              <button onclick="filterCourses('all')" data-cfilter="all" class="course-filter-btn px-3 py-1.5 rounded-full text-xs font-extrabold bg-hsu-500 text-white shrink-0">전체 과목</button>
+              <button onclick="filterCourses('track1')" data-cfilter="track1" class="course-filter-btn px-3 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 shrink-0">1트랙 (기업경영)</button>
+              <button onclick="filterCourses('track2')" data-cfilter="track2" class="course-filter-btn px-3 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 shrink-0">2트랙 (문학문화콘텐츠)</button>
+            </div>
+
+            <!-- 과목 카드 리스트 (서비스운영관리 등) -->
+            <div id="courseListContainer" class="space-y-2.5">
+              <!-- JS 동적 렌더링 -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= [P4] 속닥부기 (선배 꿀팁 & 팀 빌딩 & 인스타 연동 - PDF P.10) ================= -->
+        <section id="tab-community" class="tab-pane hidden space-y-5">
+
+          <!-- 1. 캡스톤·공모전 검증된 팀 빌딩 (PDF P.10 상단 완벽 재현) -->
+          <div>
+            <div class="flex items-center justify-between mb-2.5 px-1">
+              <div>
+                <h2 class="text-sm font-extrabold text-slate-900">캡스톤·공모전 팀 빌딩</h2>
+                <p class="text-[11px] text-slate-400">학과·트랙·이수과목 인증 프로필 기반 안전 매칭</p>
+              </div>
+              <button onclick="openNewTeamModal()" class="px-2.5 py-1.5 rounded-xl bg-hsu-50 text-hsu-600 text-xs font-extrabold border border-hsu-200 hover:bg-hsu-100 transition">
+                + 팀원 모집 등록
+              </button>
+            </div>
+
+            <div id="teamGridContainer" class="grid grid-cols-2 gap-3">
+              <!-- JS에서 동적 렌더링 (캡스톤 2/4, 한성아이디어 공모전 1/4 등) -->
+            </div>
+          </div>
+
+          <!-- 2. 동아리·행사 피드 원스톱 연동 (PDF P.10 중앙 포스터 2종 완벽 재현) -->
+          <div>
+            <div class="flex items-center justify-between mb-2.5 px-1">
+              <div>
+                <h2 class="text-sm font-extrabold text-slate-900">동아리·행사 피드</h2>
+                <p class="text-[11px] text-slate-400">인스타그램 피드 썸네일 프리뷰 및 즉시 지원</p>
+              </div>
+              <span class="text-[11px] font-extrabold text-pink-600 bg-pink-50 px-2.5 py-0.5 rounded-full border border-pink-200">
+                Instagram 연동
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <!-- 포스터 1: 사진동아리 P.I.G 신입부원 모집 (PDF P.10 좌측 포스터 재현) -->
+              <div onclick="openInstaFeedModal('pig')" class="group cursor-pointer">
+                <div class="pig-poster-bg rounded-3xl h-56 p-4 flex flex-col justify-between text-white relative overflow-hidden shadow-md border border-slate-200/80 group-hover:scale-[1.01] transition">
+                  <!-- 인스타 아이콘 배지 -->
+                  <div class="w-8 h-8 rounded-xl insta-badge flex items-center justify-center shadow-md">
+                    <i data-lucide="instagram" class="w-4 h-4 text-white"></i>
+                  </div>
+
+                  <!-- 잔디밭 빛 효과 장식 -->
+                  <div class="my-auto relative z-10">
+                    <p class="font-serif text-[17px] leading-tight font-bold tracking-tight drop-shadow">
+                      Photograph<br/>Image<br/>Group
+                    </p>
+                    <!-- 4각 별 심볼 (PDF 포스터 동일) -->
+                    <svg class="w-8 h-8 text-white inline-block -mt-6 ml-24 drop-shadow" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 0 L14.8 9.2 L24 12 L14.8 14.8 L12 24 L9.2 14.8 L0 12 L9.2 9.2 Z"/>
+                    </svg>
+                  </div>
+
+                  <div class="relative z-10">
+                    <p class="text-xs font-bold text-lime-100">2026 하반기</p>
+                    <p class="text-base font-black tracking-tight leading-snug">신입부원 모집</p>
+                    <p class="text-[10px] font-semibold text-lime-100/90 mt-0.5">26.08.31 - 09.06</p>
+                  </div>
+                </div>
+                <p class="text-xs font-extrabold text-slate-800 mt-2 text-center group-hover:text-hsu-600 break-keep leading-snug">
+                  사진동아리 P.I.G<br class="sm:hidden"/> 신입부원모집
+                </p>
+              </div>
+
+              <!-- 포스터 2: 26-1학기 동아리 & 학습 박람회 (PDF P.10 우측 포스터 재현) -->
+              <div onclick="openInstaFeedModal('expo')" class="group cursor-pointer">
+                <div class="expo-poster-bg rounded-3xl h-56 p-3.5 flex flex-col justify-between text-slate-800 relative overflow-hidden shadow-md border border-blue-200 group-hover:scale-[1.01] transition">
+                  <!-- 상단 인스타 아이콘 + 소제목 -->
+                  <div class="flex items-start justify-between">
+                    <div class="w-8 h-8 rounded-xl insta-badge flex items-center justify-center shadow-md shrink-0">
+                      <i data-lucide="instagram" class="w-4 h-4 text-white"></i>
+                    </div>
+                    <span class="text-[9px] font-extrabold text-hsu-600 bg-white/85 px-2 py-0.5 rounded-full">HSU EXPO</span>
+                  </div>
+
+                  <!-- 중앙 타이틀: 연결, 새로운 시작 -->
+                  <div class="my-auto text-center relative z-10 break-keep">
+                    <p class="text-[10px] font-extrabold text-slate-600 leading-tight">
+                      2026학년도 1학기<br/>동아리 & 학습박람회
+                    </p>
+                    <div class="mt-2 py-2 px-2.5 rounded-2xl bg-white/90 backdrop-blur-sm border border-blue-200 shadow-sm">
+                      <p class="text-lg font-black text-hsu-600 tracking-tight leading-snug">
+                        연결,<br/><span class="text-slate-800 text-[15px]">새로운 시작</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- 하단 일시 -->
+                  <div class="text-center relative z-10 break-keep">
+                    <p class="text-[10px] font-extrabold text-slate-600 bg-white/75 rounded-xl py-1 px-1.5 leading-tight">
+                      03.04(수) - 03.05(목)<br/>12:00 - 18:00
+                    </p>
+                  </div>
+                </div>
+                <p class="text-xs font-extrabold text-slate-800 mt-2 text-center group-hover:text-hsu-600 break-keep leading-snug">
+                  26-1학기 동아리 &<br class="sm:hidden"/> 학습 박람회
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. 선배 꿀팁 노하우 아카이브 & 자유게시판 (PDF P.10 하단 & P.11 정보의 자산화) -->
+          <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <button onclick="setBoardSubTab('tips')" id="subTabTips" class="text-xs font-extrabold text-hsu-600 border-b-2 border-hsu-500 pb-1">
+                  선배 꿀팁 아카이브
+                </button>
+                <button onclick="setBoardSubTab('free')" id="subTabFree" class="text-xs font-bold text-slate-400 pb-1 hover:text-slate-600">
+                  자유게시판
+                </button>
+              </div>
+              <button onclick="openNewPostModal()" class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-bold hover:bg-slate-800 transition">
+                + 글쓰기
+              </button>
+            </div>
+
+            <!-- 게시글 검색창 -->
+            <div class="relative">
+              <input id="communitySearchInput" oninput="renderCommunityPosts()" type="text" placeholder="트랙 꿀팁, 계절학기, 국가근로 후기 검색..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs font-semibold focus:outline-none focus:border-hsu-500" />
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+            </div>
+
+            <!-- 게시글 리스트 -->
+            <div id="communityPostsContainer" class="space-y-2">
+              <!-- JS 동적 렌더링 -->
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ================= 하단 앱 탭바 네비게이션 ================= -->
+      <nav class="bg-white border-t border-slate-200/80 px-2 py-2 flex items-center justify-around shrink-0 z-20">
+        <button onclick="switchTab('tab-home')" id="nav-tab-home" class="nav-item flex flex-col items-center gap-1 py-1 px-3 rounded-2xl text-hsu-500 font-extrabold transition">
+          <i data-lucide="home" class="w-5 h-5"></i>
+          <span class="text-[10px]">오늘의 부기</span>
+        </button>
+        <button onclick="switchTab('tab-push')" id="nav-tab-push" class="nav-item flex flex-col items-center gap-1 py-1 px-3 rounded-2xl text-slate-400 font-bold hover:text-slate-600 transition relative">
+          <i data-lucide="bell" class="w-5 h-5"></i>
+          <span class="text-[10px]">부기의 참견</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-hsu-500 absolute top-1.5 right-4"></span>
+        </button>
+        <button onclick="switchTab('tab-academic')" id="nav-tab-academic" class="nav-item flex flex-col items-center gap-1 py-1 px-3 rounded-2xl text-slate-400 font-bold hover:text-slate-600 transition">
+          <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+          <span class="text-[10px]">학사부기</span>
+        </button>
+        <button onclick="switchTab('tab-community')" id="nav-tab-community" class="nav-item flex flex-col items-center gap-1 py-1 px-3 rounded-2xl text-slate-400 font-bold hover:text-slate-600 transition">
+          <i data-lucide="users" class="w-5 h-5"></i>
+          <span class="text-[10px]">속닥부기</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- ================= 모달 & 바텀시트 오버레이 컨테이너 ================= -->
+    <div id="modalOverlay" onclick="closeModalOnBg(event)" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-40 flex items-end justify-center">
+      <div id="modalSheet" class="w-full max-h-[86%] bg-white rounded-t-[32px] p-6 shadow-2xl overflow-y-auto no-scrollbar sheet-up">
+        <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4"></div>
+        <div id="modalContent"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= 자바스크립트 애플리케이션 로직 ================= -->
+  <script>
+    // ============================================================================
+    // 1. 초기 데이터셋 정의 (PDF 보고서 P.1 ~ P.14 내용 완벽 반영)
+    // ============================================================================
+    const PERSONAS = {
+      yeonseo: {
+        id: 'yeonseo',
+        name: '손연서',
+        studentId: '2471146',
+        chipLabel: '연서님 (24)',
+        grade: '2학년',
+        track1: { name: '1트랙 · 기업경영트랙', current: 33, required: 39 },
+        track2: { name: '2트랙 · 문학문화콘텐츠트랙', current: 45, required: 39 },
+        totalCredits: 114,
+        briefingText: '연서님, 신청하신 [점프업 프로젝트] <span class="text-hsu-500">D-1</span>입니다!',
+        briefingSub: 'HIGH 시스템 결과보고서 업로드 마감일(내일 18:00)을 확인하세요.',
+        keywords: ['동아리', '국가근로', '비교과']
+      },
+      taegyu: {
+        id: 'taegyu',
+        name: '엄태규',
+        studentId: '2131284',
+        chipLabel: '태규님 (21)',
+        grade: '4학년',
+        track1: { name: '1트랙 · 기업경영트랙', current: 36, required: 39 },
+        track2: { name: '2트랙 · 산업공학트랙', current: 39, required: 39 },
+        totalCredits: 124,
+        briefingText: '태규님, 참여 중인 [한성아이디어 경진대회] 최종 발표 <span class="text-hsu-500">D-Day</span>입니다!',
+        briefingSub: '졸업요건 충족까지 1트랙 전공 3학점 남았습니다. 학사부기를 확인하세요.',
+        keywords: ['국가근로', '공모전', '취업', '캡스톤']
+      },
+      woohyeok: {
+        id: 'woohyeok',
+        name: '이우혁',
+        studentId: '2592014',
+        chipLabel: '우혁님 (25)',
+        grade: '1학년',
+        track1: { name: '1트랙 · 상상력인재학부(배정전)', current: 15, required: 39 },
+        track2: { name: '2트랙 · 자율설계탐색', current: 12, required: 39 },
+        totalCredits: 33,
+        briefingText: '우혁님, [2026 동아리 & 학습박람회] 부스 스탬프 투어 <span class="text-hsu-500">진행 중</span>입니다!',
+        briefingSub: '2학년 진학 전 트랙 설명회 일정과 필수 교양 이수 현황을 점검해보세요.',
+        keywords: ['동아리', '비교과', '장학금']
+      }
+    };
+
+    const INITIAL_DDAYS = [
+      {
+        id: 'dd1',
+        title: '수강신청',
+        dday: 'D-3',
+        date: '2026-08-21',
+        desc: '2026학년도 2학기 본 수강신청 일정입니다. 종합정보시스템에서 장바구니 내역을 사전에 점검하세요.',
+        url: 'https://info.hansung.ac.kr/'
+      },
+      {
+        id: 'dd2',
+        title: '국가근로장학',
+        dday: 'D-6',
+        date: '2026-08-24',
+        desc: '한국장학재단 국가근로장학금 학생 희망근로지(교내 행정부서 및 성북문화원 등 교외기관) 신청 마감일입니다.',
+        url: 'https://www.hansung.ac.kr/hansung/6172/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGaGFuc3VuZyUyRjIxMjclMkZhcnRjbExpc3QuZG8lM0Y%3D'
+      }
+    ];
+
+    const INITIAL_FACILITIES = [
+      {
+        id: 'fac1',
+        room: '상상베이스 B108호',
+        category: '스터디룸 · 실습실 예약 연동',
+        time: '17:00 ~ 18:00',
+        purpose: '한성아이디어 경진대회 리허설',
+        checkedIn: false
+      }
+    ];
+
+    const INITIAL_NOTICES = [
+      {
+        id: 'n1',
+        title: '2027학년도 1학기 동아리 & 학습박람회 행사 안내',
+        category: '비교과·동아리',
+        keywords: ['동아리', '비교과', '박람회'],
+        timeAgo: '방금 전',
+        department: '학생처 학생장학팀 · 동아리연합회',
+        matchScore: 99,
+        summary: [
+          '일시: 03.04(수) ~ 03.05(목) 12:00~18:00 / 장소: 상상관 체육관 일대',
+          '중앙동아리 42개 분과 부스 운영 및 트랙별 학습 멘토링 부스 동시 진행',
+          '부스 스탬프 3개 이상 인증 시 비교과(HSU) 포인트 20P 즉시 지급'
+        ],
+        url: 'https://hsportal.hansung.ac.kr/'
+      },
+      {
+        id: 'n2',
+        title: '2026학년도 1학기 국가근로장학금 학생 희망근로지 신청 안내',
+        category: '국가근로',
+        keywords: ['국가근로', '장학금', '근로'],
+        timeAgo: '3분 전',
+        department: '학생장학팀',
+        matchScore: 97,
+        summary: [
+          '한국장학재단 모바일 앱 또는 홈페이지에서 희망근로지 최대 2곳 선택 신청',
+          '교내 근로지(학술정보관, 상상베이스) 및 교외 근로지(성북문화원 등) 선발',
+          '직전학기 성적 C0(70점) 이상 및 학자금 지원구간 9구간 이하 재학생 대상'
+        ],
+        url: 'https://www.hansung.ac.kr/hansung/6172/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGaGFuc3VuZyUyRjIxMjclMkZhcnRjbExpc3QuZG8lM0Y%3D'
+      },
+      {
+        id: 'n3',
+        title: '[HIGH 비교과] 2026 점프업(Jump-Up) 자기주도 프로젝트 결과보고서 제출 안내',
+        category: '비교과·동아리',
+        keywords: ['비교과', '점프업', '장학금'],
+        timeAgo: '25분 전',
+        department: '교수학습센터 (CTL)',
+        matchScore: 95,
+        summary: [
+          '점프업 프로젝트 참여팀 대상 최종 결과보고서 및 활동 영수증 온라인 제출',
+          '기한 내 완주 시 비교과 포인트 50P 및 활동 장학금 지급 예정',
+          'HIGH 시스템 마이페이지 > 비교과 이수관리 메뉴에서 파일 업로드'
+        ],
+        url: 'https://hsportal.hansung.ac.kr/'
+      },
+      {
+        id: 'n4',
+        title: '제2회 한성아이디어 경진대회 본선 발표 및 시상식 개최 안내',
+        category: '비교과·동아리',
+        keywords: ['공모전', '비교과', '캡스톤'],
+        timeAgo: '1시간 전',
+        department: '창업지원단 · 교육혁신원',
+        matchScore: 94,
+        summary: [
+          'AI 기반 학생 맞춤형 대학 서비스 및 캠퍼스 혁신 아이디어 본선 PT 진행',
+          '우수 제안작은 실제 대학 행정 시스템 및 스마트 캠퍼스 앱 고도화에 반영',
+          '참관 학생 전원 비교과 포인트 부여'
+        ],
+        url: 'https://www.hansung.ac.kr/hansung/6172/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGaGFuc3VuZyUyRjIxMjclMkZhcnRjbExpc3QuZG8lM0Y%3D'
+      },
+      {
+        id: 'n5',
+        title: '2026학년도 2학기 수강신청 장바구니(예비수강신청) 일정 공고',
+        category: '학사',
+        keywords: ['학사', '수강신청'],
+        timeAgo: '2시간 전',
+        department: '교무처 학사지원팀',
+        matchScore: 92,
+        summary: [
+          '장바구니 기간 중 경쟁률 확인 후 정원 외 과목만 본 수강신청 시 선착순 전환',
+          '1트랙 및 2트랙 필수 전공과목 이수 여부를 학사부기에서 사전 시뮬레이션 권장'
+        ],
+        url: 'https://www.hansung.ac.kr/hansung/6172/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGaGFuc3VuZyUyRjIxMjclMkZhcnRjbExpc3QuZG8lM0Y%3D'
+      },
+      {
+        id: 'n6',
+        title: '성북문화원 × 한성대 지역문화 아카이빙 서포터즈 & 교외근로 모집',
+        category: '국가근로',
+        keywords: ['국가근로', '동아리', '공모전'],
+        timeAgo: '4시간 전',
+        department: '성북문화원 · 학생장학팀',
+        matchScore: 91,
+        summary: [
+          '성북구 역사·문화유산 디지털 아카이빙 및 전시 홍보 콘텐츠 기획 업무',
+          '문학문화콘텐츠트랙 및 사진·영상 관심 학우 우대 선발'
+        ],
+        url: 'https://www.hansung.ac.kr/hansung/6172/subview.do?enc=Zm5jdDF8QEB8JTJGYmJzJTJGaGFuc3VuZyUyRjIxMjclMkZhcnRjbExpc3QuZG8lM0Y%3D'
+      }
+    ];
+
+    const INITIAL_COURSES = [
+      {
+        id: 'c1',
+        title: '서비스운영관리',
+        type: '7',
+        track: 'track1',
+        trackLabel: '1트랙 · 기업경영트랙',
+        credits: 3,
+        room: '상상관 506호',
+        tags: '팀플 · 발표 · 필기시험 2회',
+        prof: '최희선 교수님',
+        qnaStyle: '이클래스 쪽지 및 수업 직후 대면 질문 모두 친절히 답변해주심',
+        evalRatio: '중간 30% · 기말 30% · 팀프로젝트 25% · 출석/참여 15%',
+        planned: false,
+        reviews: [
+          '케이스 스터디 발표가 1회 있지만 가이드라인이 명확해서 배울 점이 정말 많아요!',
+          '필기시험은 강의안 위주로 출제되니 수업 시간 필기가 중요합니다.'
+        ]
+      },
+      {
+        id: 'c2',
+        title: '인적자원관리',
+        type: 'N',
+        track: 'track1',
+        trackLabel: '1트랙 · 기업경영트랙',
+        credits: 3,
+        room: '탐구관 302호',
+        tags: '필기시험 2회 · 중간 · 기말',
+        prof: '차종석 교수님',
+        qnaStyle: '수업 전후 질의응답 및 이메일 문의에 체계적으로 피드백 제공',
+        evalRatio: '중간고사 45% · 기말고사 45% · 출석 및 수업참여 10%',
+        planned: false,
+        reviews: [
+          '팀플 부담 없이 중간·기말 필기시험 2회로 깔끔하게 평가받아 공부하기 좋습니다!'
+        ]
+      },
+      {
+        id: 'c3',
+        title: '기업가정신',
+        type: 'A',
+        track: 'track1',
+        trackLabel: '1트랙 · 기업경영트랙',
+        credits: 3,
+        room: '탐구관 303호',
+        tags: '중간 · 기말 · 보고서',
+        prof: '심경식 교수님',
+        qnaStyle: '사례 중심 질의응답과 보고서 주제 선정 상담을 꼼꼼히 해주심',
+        evalRatio: '중간고사 35% · 기말고사 35% · 보고서 과제 20% · 출석 10%',
+        planned: false,
+        reviews: [
+          '스타트업 및 혁신 기업 사례를 폭넓게 다뤄서 기업경영트랙 학우들에게 강추합니다.'
+        ]
+      },
+      {
+        id: 'c4',
+        title: '문화콘텐츠마케팅',
+        type: 'N',
+        track: 'track2',
+        trackLabel: '2트랙 · 문학문화콘텐츠트랙',
+        credits: 3,
+        room: '상상관 702호',
+        tags: '팀플 2회 · 중간고사 1회',
+        prof: '김보름 교수님',
+        qnaStyle: '팀 프로젝트 기획안 피드백을 세심하게 봐주시고 소통이 활발함',
+        evalRatio: '중간고사 30% · 팀플 2회(발표/기획) 50% · 출석 및 참여도 20%',
+        planned: false,
+        reviews: [
+          '콘텐츠 트렌드와 실제 마케팅 전략을 팀플로 직접 기획해볼 수 있어 포트폴리오에 최고예요.'
+        ]
+      },
+      {
+        id: 'c5',
+        title: '스토리텔링의 세계',
+        type: 'A',
+        track: 'track2',
+        trackLabel: '2트랙 · 문학문화콘텐츠트랙',
+        credits: 3,
+        room: '탐구관 301호',
+        tags: '스토리 분석 · 창작 실습 · 발표',
+        prof: '강호정 교수님',
+        qnaStyle: '작품 해석과 스토리 구상에 대해 깊이 있는 피드백을 제공해주심',
+        evalRatio: '중간 과제/발표 40% · 기말 프로젝트 45% · 출석 15%',
+        planned: false,
+        reviews: [
+          '다양한 매체의 서사 구조를 깊이 있게 배울 수 있는 문학문화콘텐츠트랙 대표 명강의입니다.'
+        ]
+      }
+    ];
+
+    const INITIAL_TEAMS = [
+      {
+        id: 't1',
+        category: '캡스톤',
+        current: 2,
+        max: 4,
+        leaderSpec: '산업공학트랙 / 3학년',
+        verifiedCourses: ['서비스운영관리 A+', '데이터분석기초 A0'],
+        desc: '스마트 캠퍼스 물류/공간 최적화 주제로 캡스톤디자인 함께하실 기획·디자인·프론트 학우 구합니다!',
+        joined: false
+      },
+      {
+        id: 't2',
+        category: '한성아이디어 공모전',
+        current: 1,
+        max: 4,
+        leaderSpec: '기업경영트랙 / 4학년',
+        verifiedCourses: ['마케팅원론 A+', '창업과경영 A+'],
+        desc: '초개인화 학교 정보 플랫폼 [싹싹부기] 서비스 기획 및 프로토타입 시연 함께할 열정적인 팀원 모집!',
+        joined: false
+      },
+      {
+        id: 't3',
+        category: '점프업 프로젝트',
+        current: 3,
+        max: 4,
+        leaderSpec: '문학문화콘텐츠 / 2학년',
+        verifiedCourses: ['문화콘텐츠기획론 A+', '디지털스토리텔링 A0'],
+        desc: '성북구 독립서점 & 문화공간 아카이빙 매거진 제작 팀입니다. 사진 촬영 가능하신 분 1분 모셔요!',
+        joined: false
+      },
+      {
+        id: 't4',
+        category: '교내 창업캠프',
+        current: 2,
+        max: 4,
+        leaderSpec: '컴퓨터공학부 / 3학년',
+        verifiedCourses: ['웹프레임워크 A+', '모바일프로그래밍 A0'],
+        desc: '교내 비교과 포인트 연동 리워드 앱 MVP 개발 팀입니다. 비즈니스 모델 기획자 2명 구합니다.',
+        joined: false
+      }
+    ];
+
+    const INITIAL_POSTS = [
+      {
+        id: 'p1',
+        type: 'tips',
+        tag: '#트랙꿀팁',
+        title: '기업경영 + 문학문화콘텐츠트랙 복수 이수생의 수강신청 로드맵 정리',
+        author: '기업경영·21학번 (인증됨)',
+        likes: 48,
+        scraps: 32,
+        content: '1트랙 기업경영에서 서비스운영관리와 마케팅원론을 2학년 때 미리 들어두면, 3학년 때 문콘트랙 캡스톤이나 기획 수업과 팀플 일정이 겹치지 않아 훨씬 수월합니다!'
+      },
+      {
+        id: 'p2',
+        type: 'tips',
+        tag: '#국가근로',
+        title: '성북문화원 교외 국가근로 & 상상베이스 교내근로 면접 합격 후기',
+        author: '문콘트랙·24학번 (인증됨)',
+        likes: 64,
+        scraps: 51,
+        content: '싹싹부기에서 #국가근로 키워드 알림 켜두고 공지 뜨자마자 신청했어요! 성북문화원은 문화행사 아카이빙이나 카드뉴스 제작 경험 어필하면 정말 좋아하십니다.'
+      },
+      {
+        id: 'p3',
+        type: 'tips',
+        tag: '#계절학기',
+        title: '비교과 포인트(HSU 포인트) 800점 빠르게 채우는 알짜 프로그램 3선',
+        author: '산업공학·22학번 (인증됨)',
+        likes: 39,
+        scraps: 27,
+        content: '1. 학기초 동아리&학습박람회 부스 참여(20P) 2. CTL 점프업 프로젝트(50P+장학금) 3. 한성아이디어 경진대회 참가! 이렇게만 챙겨도 졸업요건 거뜬합니다.'
+      },
+      {
+        id: 'p4',
+        type: 'free',
+        tag: '#자유소통',
+        title: '오늘 상상베이스 B108호 스터디룸 예약 노쇼 방지 알림 덕분에 살았네요ㅋㅋ',
+        author: '익명부기',
+        likes: 19,
+        scraps: 4,
+        content: '팀플 회의 시간 깜빡하고 있었는데 15분 전에 오늘의 부기 리마인더 떠서 바로 QR 체크인 완료했습니다!'
+      },
+      {
+        id: 'p5',
+        type: 'free',
+        tag: '#동아리박람회',
+        title: '사진동아리 P.I.G 하반기 신입부원 모집 카메라 없어도 지원 가능한가요?',
+        author: '새내기부기 (25학번)',
+        likes: 15,
+        scraps: 6,
+        content: '인스타 포스터 보니까 출사 사진 분위기 너무 좋던데 스마트폰 촬영 위주로 시작해도 괜찮을지 궁금합니다!'
+      }
+    ];
+
+    // 인스타그램 상세 모달 데이터
+    const INSTA_FEEDS = {
+      pig: {
+        clubName: '사진동아리 P.I.G (@hsu_pig_photo)',
+        title: 'Photograph Image Group 2026 하반기 신입부원 모집',
+        period: '2026.08.31(월) ~ 09.06(일) 자정까지',
+        location: '학생회관 4층 P.I.G 암실 및 동아리방',
+        likes: 142,
+        caption: '한성대학교 중앙 사진예술동아리 P.I.G에서 2026년 하반기를 함께 빛낼 신입부원을 모집합니다! DSLR/미러리스 대여 구비 완료, 초보자 기초 사진 세미나부터 서울 근교 정기 출사, 학기말 정기 사진전까지 함께해요.',
+        tags: ['#한성대동아리', '#사진동아리', '#PIG', '#신입부원모집', '#정기출사']
+      },
+      expo: {
+        clubName: '한성대학교 학생처 · 동아리연합회 (@hsu_clubs)',
+        title: '2026학년도 1학기 동아리 & 학습박람회 [연결, 새로운 시작]',
+        period: '2026.03.04(수) ~ 03.05(목) 12:00 - 18:00',
+        location: '한성대학교 상상관 체육관 및 잔디광장 일대',
+        likes: 289,
+        caption: '새 학기 설레는 캠퍼스 라이프의 시작! 중앙동아리 홍보 부스 체험과 전공 트랙별 선배 학습 멘토링이 한자리에서 열립니다. 스탬프 투어 완료 시 비교과 포인트와 상상부기 굿즈를 드려요!',
+        tags: ['#한성대학교', '#동아리박람회', '#학습박람회', '#연결새로운시작', '#상상부기']
+      }
+    };
+
+    // ============================================================================
+    // 2. 상태 관리 (localStorage 연동)
+    // ============================================================================
+    const STORAGE_KEY = 'SACSACBUGI_STATE_V195';
+
+    let appState = {
+      activePersona: 'yeonseo',
+      activeTab: 'tab-home',
+      noticeCategory: '전체',
+      courseFilter: 'all',
+      boardSubTab: 'tips',
+      ddays: [],
+      facilities: [],
+      notices: [],
+      courses: [],
+      teams: [],
+      posts: [],
+      keywordsByPersona: {
+        yeonseo: ['동아리', '국가근로', '비교과'],
+        taegyu: ['국가근로', '공모전', '캡스톤'],
+        woohyeok: ['동아리', '비교과', '장학금']
+      }
+    };
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          appState = { ...appState, ...parsed };
+        } else {
+          initDefaultState();
+        }
+      } catch (e) {
+        initDefaultState();
+      }
+    }
+
+    function initDefaultState() {
+      appState.ddays = JSON.parse(JSON.stringify(INITIAL_DDAYS));
+      appState.facilities = JSON.parse(JSON.stringify(INITIAL_FACILITIES));
+      appState.notices = JSON.parse(JSON.stringify(INITIAL_NOTICES));
+      appState.courses = JSON.parse(JSON.stringify(INITIAL_COURSES));
+      appState.teams = JSON.parse(JSON.stringify(INITIAL_TEAMS));
+      appState.posts = JSON.parse(JSON.stringify(INITIAL_POSTS));
+      saveState();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.warn('localStorage 저장 제한:', e);
+      }
+    }
+
+    function resetAllAppData() {
+      localStorage.removeItem(STORAGE_KEY);
+      appState.activePersona = 'yeonseo';
+      appState.keywordsByPersona = {
+        yeonseo: ['동아리', '국가근로', '비교과'],
+        taegyu: ['국가근로', '공모전', '캡스톤'],
+        woohyeok: ['동아리', '비교과', '장학금']
+      };
+      initDefaultState();
+      renderAll();
+      showToast('모든 시연 데이터가 초기 보고서 상태로 복원되었습니다.');
+    }
+
+    // ============================================================================
+    // 3. 화면 전환 & 모드 전환 컨트롤러
+    // ============================================================================
+    function showSplash() {
+      document.getElementById('splashScreen').classList.remove('hidden');
+      document.getElementById('mainAppView').classList.add('hidden');
+      document.getElementById('statusBar').className = 'bg-hsu-500 text-white px-6 pt-3 pb-2 flex items-center justify-between text-xs font-extrabold shrink-0 z-30 transition-colors duration-300';
+      lucide.createIcons();
+    }
+
+    function startApp() {
+      document.getElementById('splashScreen').classList.add('hidden');
+      document.getElementById('mainAppView').classList.remove('hidden');
+      document.getElementById('statusBar').className = 'bg-white text-slate-900 px-6 pt-3 pb-2 flex items-center justify-between text-xs font-extrabold shrink-0 z-30 border-b border-slate-100 transition-colors duration-300';
+      switchTab(appState.activeTab || 'tab-home');
+    }
+
+    function startAppAndOpenTab(tabId) {
+      startApp();
+      switchTab(tabId);
+    }
+
+    function switchTab(tabId) {
+      appState.activeTab = tabId;
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById(tabId);
+      if (target) target.classList.remove('hidden');
+
+      // 헤더 텍스트 업데이트
+      const titles = {
+        'tab-home': ['오늘의 부기', '초개인화 대시보드 · P1'],
+        'tab-push': ['부기의 참견', '키워드 PUSH 알림 · P2'],
+        'tab-academic': ['학사부기', '학사가이드 · 전공도우미 · P3'],
+        'tab-community': ['속닥부기', '선배 꿀팁 · 검증된 팀 빌딩 · P4']
+      };
+      if (titles[tabId]) {
+        document.getElementById('headerTitle').textContent = titles[tabId][0];
+        document.getElementById('headerSubtitle').textContent = titles[tabId][1];
+      }
+
+      // 하단 네비게이션 스타일 업데이트
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.remove('text-hsu-500', 'font-extrabold', 'bg-hsu-50/70');
+        btn.classList.add('text-slate-400', 'font-bold');
+      });
+      const activeNav = document.getElementById('nav-' + tabId);
+      if (activeNav) {
+        activeNav.classList.remove('text-slate-400', 'font-bold');
+        activeNav.classList.add('text-hsu-500', 'font-extrabold', 'bg-hsu-50/70');
+      }
+
+      document.getElementById('mainScrollArea').scrollTop = 0;
+      lucide.createIcons();
+    }
+
+    function setViewMode(mode) {
+      const panel = document.getElementById('showcasePanel');
+      const studioBtn = document.getElementById('modeStudioBtn');
+      const appBtn = document.getElementById('modeAppOnlyBtn');
+      if (mode === 'app') {
+        panel.classList.add('lg:hidden');
+        panel.classList.remove('lg:flex');
+        appBtn.className = 'px-3 py-1 rounded-xl text-xs font-extrabold bg-hsu-500 text-white transition';
+        studioBtn.className = 'px-3 py-1 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition';
+        showToast('실제 앱 단독 화면 모드로 전환되었습니다.');
+      } else {
+        panel.classList.remove('lg:hidden');
+        panel.classList.add('lg:flex');
+        studioBtn.className = 'px-3 py-1 rounded-xl text-xs font-extrabold bg-hsu-500 text-white transition';
+        appBtn.className = 'px-3 py-1 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition';
+        showToast('발표자 시연 스튜디오 모드가 활성화되었습니다.');
+      }
+    }
+
+    // ============================================================================
+    // 4. 페르소나 전환 및 전체 렌더링
+    // ============================================================================
+    function switchPersona(personaKey) {
+      appState.activePersona = personaKey;
+      saveState();
+      renderAll();
+      const p = PERSONAS[personaKey];
+      showToast(`${p.name} (${p.grade}) 맞춤 환경으로 전환되었습니다.`);
+    }
+
+    function cyclePersona() {
+      const keys = ['yeonseo', 'taegyu', 'woohyeok'];
+      const nextIdx = (keys.indexOf(appState.activePersona) + 1) % keys.length;
+      switchPersona(keys[nextIdx]);
+    }
+
+    function renderAll() {
+      const p = PERSONAS[appState.activePersona] || PERSONAS.yeonseo;
+
+      // 상단 페르소나 칩 및 좌측 스튜디오 버튼 동기화
+      document.getElementById('personaChipText').textContent = p.chipLabel;
+      ['yeonseo', 'taegyu', 'woohyeok'].forEach(k => {
+        const btn = document.getElementById('pBtn-' + k);
+        if (!btn) return;
+        if (k === appState.activePersona) {
+          btn.className = 'p-2 rounded-xl border text-left transition bg-hsu-500 text-white border-hsu-500 shadow-xs';
+        } else {
+          btn.className = 'p-2 rounded-xl border text-left transition bg-white text-slate-700 border-slate-200 hover:bg-slate-100';
+        }
+      });
+
+      // P1 브리핑 텍스트 업데이트
+      document.getElementById('briefingMainText').innerHTML = p.briefingText;
+      document.getElementById('briefingSubText').textContent = p.briefingSub;
+      document.getElementById('briefingTrackBadge').textContent = `${p.grade} · 학번 ${p.studentId}`;
+
+      renderDdays();
+      renderFacilities();
+      renderKeywords();
+      renderNoticeList();
+      renderAcademicProgress();
+      renderCourses();
+      renderTeams();
+      renderCommunityPosts();
+      lucide.createIcons();
+    }
+
+    // ============================================================================
+    // 5. [P1] 오늘의 부기: D-DAY & 시설 예약 & 브리핑 모달
+    // ============================================================================
+    function renderDdays() {
+      const container = document.getElementById('ddayGrid');
+      container.innerHTML = appState.ddays.map(item => `
+        <div onclick="openDdayDetailModal('${item.id}')" class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200/80 flex items-center justify-between cursor-pointer hover:border-hsu-500 transition group">
+          <div class="min-w-0 pr-2">
+            <span class="text-xs font-extrabold text-slate-700 group-hover:text-hsu-600 block truncate">${item.title}</span>
+            <span class="text-[10px] text-slate-400 font-semibold">${item.date || '학사 주요일정'}</span>
+          </div>
+          <strong class="text-lg font-black text-hsu-500 shrink-0">${item.dday}</strong>
+        </div>
+      `).join('');
+    }
+
+    function openDdayDetailModal(id) {
+      const item = appState.ddays.find(d => d.id === id);
+      if (!item) return;
+      openModal(`
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-1 rounded-lg bg-hsu-50 text-hsu-600 text-xs font-extrabold">상상부기 D-DAY 리마인더</span>
+            <span class="text-xl font-black text-hsu-500">${item.dday}</span>
+          </div>
+          <h3 class="text-lg font-black text-slate-900">${item.title}</h3>
+          <p class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-200/70">
+            ${item.desc}
+          </p>
+          <div class="flex gap-2 pt-2">
+            <a href="${item.url || 'https://www.hansung.ac.kr'}" target="_blank" rel="noopener noreferrer" class="flex-1 py-3 rounded-xl bg-hsu-500 text-white text-center text-xs font-extrabold hover:bg-hsu-600 transition">
+              해당 교내 시스템 바로가기
+            </a>
+            ${appState.ddays.length > 1 ? `
+              <button onclick="deleteDday('${item.id}')" class="px-4 py-3 rounded-xl bg-rose-50 text-rose-600 text-xs font-extrabold hover:bg-rose-100 transition">
+                삭제
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `);
+    }
+
+    function deleteDday(id) {
+      appState.ddays = appState.ddays.filter(d => d.id !== id);
+      saveState();
+      renderDdays();
+      closeModal();
+      showToast('D-DAY 일정이 삭제되었습니다.');
+    }
+
+    function openAddDdayModal() {
+      openModal(`
+        <form onsubmit="handleAddDdaySubmit(event)" class="space-y-4">
+          <h3 class="text-base font-black text-slate-900">나만의 학사/취업 D-DAY 추가</h3>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">일정 제목</label>
+            <input id="ddayTitleInput" required type="text" placeholder="예: 토익 정기시험, 캡스톤 중간발표" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold" />
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">목표 날짜 (자동 D-Day 계산)</label>
+            <input id="ddayDateInput" required type="date" value="2026-09-05" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold" />
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">메모 / 준비사항</label>
+            <input id="ddayDescInput" type="text" placeholder="예: 성적표 출력 및 포트폴리오 PDF 점검" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold" />
+          </div>
+          <button type="submit" class="w-full py-3.5 rounded-2xl bg-hsu-500 text-white text-xs font-extrabold shadow-md hover:bg-hsu-600 transition">
+            오늘의 부기 위젯에 등록하기
+          </button>
+        </form>
+      `);
+    }
+
+    function handleAddDdaySubmit(e) {
+      e.preventDefault();
+      const title = document.getElementById('ddayTitleInput').value.trim();
+      const dateStr = document.getElementById('ddayDateInput').value;
+      const desc = document.getElementById('ddayDescInput').value.trim() || '사용자가 등록한 맞춤 학사/취업 일정입니다.';
+
+      const today = new Date('2026-08-18T00:00:00');
+      const target = new Date(dateStr + 'T00:00:00');
+      const diffDays = Math.max(1, Math.round((target - today) / (1000 * 60 * 60 * 24)));
+
+      appState.ddays.push({
+        id: 'dd_' + Date.now(),
+        title,
+        dday: `D-${diffDays}`,
+        date: dateStr,
+        desc,
+        url: 'https://www.hansung.ac.kr/'
+      });
+      saveState();
+      renderDdays();
+      closeModal();
+      showToast(`[${title}] D-${diffDays} 위젯이 추가되었습니다!`);
+    }
+
+    function openBriefingDetailModal() {
+      const p = PERSONAS[appState.activePersona];
+      openModal(`
+        <div class="space-y-4">
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-hsu-50 text-hsu-600 text-xs font-extrabold">
+            <span>상상부기 AI 맞춤 브리핑</span>
+          </div>
+          <h3 class="text-base font-black text-slate-900">${p.briefingText.replace(/<[^>]*>/g, '')}</h3>
+          <p class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-200/70">
+            ${p.briefingSub}<br/><br/>
+            • <strong>연동 시스템:</strong> 한성대 HIGH 비교과 통합관리시스템<br/>
+            • <strong>혜택 안내:</strong> 기한 내 완료 시 비교과 50P + 장학금 수혜 자격 유지
+          </p>
+          <a href="https://hsportal.hansung.ac.kr/" target="_blank" rel="noopener noreferrer" class="block w-full py-3.5 rounded-2xl bg-hsu-500 text-white text-center text-xs font-extrabold">
+            HIGH 시스템에서 바로 제출/확인하기
+          </a>
+        </div>
+      `);
+    }
+
+    function openBasketCheckModal() {
+      openModal(`
+        <div class="space-y-4">
+          <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-600 text-xs font-extrabold">필수 학사공지 · D-1</span>
+          <h3 class="text-base font-black text-slate-900">수강신청 장바구니 사전 점검 체크리스트</h3>
+          <div class="space-y-2 text-xs">
+            <label class="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer">
+              <input type="checkbox" checked class="accent-blue-600 w-4 h-4" />
+              <span class="font-bold text-slate-700">1트랙(기업경영) 필수 전공학점 잔여학점(6학점) 확인</span>
+            </label>
+            <label class="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer">
+              <input type="checkbox" checked class="accent-blue-600 w-4 h-4" />
+              <span class="font-bold text-slate-700">서비스운영관리(상상관 506호) 시간표 중복 여부 체크</span>
+            </label>
+            <label class="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer">
+              <input type="checkbox" class="accent-blue-600 w-4 h-4" />
+              <span class="font-bold text-slate-700">장바구니 경쟁률 초과 과목 대체 분반 1개 이상 확보</span>
+            </label>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="closeModal(); switchTab('tab-academic');" class="flex-1 py-3 rounded-xl bg-hsu-500 text-white text-xs font-extrabold">
+              학사부기 시뮬레이터로 이동
+            </button>
+            <button onclick="closeModal()" class="px-4 py-3 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold">
+              닫기
+            </button>
+          </div>
+        </div>
+      `);
+    }
+
+    // 시설 예약 렌더링 & QR 체크인/예약 모달
+    function renderFacilities() {
+      const container = document.getElementById('facilityListContainer');
+      container.innerHTML = appState.facilities.map(fac => `
+        <div onclick="openFacilityModal('detail', '${fac.id}')" class="bg-white rounded-3xl p-4 shadow-xs border border-slate-200/80 flex items-center justify-between cursor-pointer hover:border-hsu-500 transition">
+          <div>
+            <span class="text-[10px] font-extrabold text-slate-400">${fac.category}</span>
+            <h3 class="text-[15px] font-black text-slate-900 mt-0.5">${fac.room}</h3>
+            <p class="text-xs font-extrabold text-hsu-500 mt-0.5">${fac.time} <span class="text-slate-400 font-semibold">· ${fac.purpose}</span></p>
+          </div>
+          <div class="flex items-center gap-2">
+            ${fac.checkedIn
+              ? `<span class="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-600 text-xs font-extrabold border border-emerald-200">입실 완료</span>`
+              : `<span class="px-2.5 py-1 rounded-xl bg-hsu-50 text-hsu-600 text-xs font-extrabold border border-hsu-200">입실 전 (QR)</span>`
+            }
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openFacilityModal(mode, facId) {
+      if (mode === 'book') {
+        openModal(`
+          <form onsubmit="handleBookFacilitySubmit(event)" class="space-y-4">
+            <span class="px-2.5 py-1 rounded-lg bg-hsu-50 text-hsu-600 text-xs font-extrabold">교내 시설 원스톱 예약</span>
+            <h3 class="text-base font-black text-slate-900">스터디룸 · 실습실 신규 예약</h3>
+            <div>
+              <label class="text-xs font-bold text-slate-600 block mb-1">공간 선택</label>
+              <select id="bookRoomSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold">
+                <option value="상상베이스 B108호">상상베이스 B108호 (6인 미디어 테이블)</option>
+                <option value="학술정보관 그룹스터디룸 402호">학술정보관 그룹스터디룸 402호 (8인)</option>
+                <option value="상상관 크리에이티브 스튜디오">상상관 크리에이티브 스튜디오 (촬영/편집)</option>
+                <option value="학생회관 동아리 세미나실 A203">학생회관 동아리 세미나실 A203</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-600 block mb-1">이용 시간대</label>
+              <select id="bookTimeSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold">
+                <option value="18:00 ~ 19:00">오늘 18:00 ~ 19:00</option>
+                <option value="19:00 ~ 20:00">오늘 19:00 ~ 20:00</option>
+                <option value="내일 14:00 ~ 16:00">내일 14:00 ~ 16:00</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-600 block mb-1">이용 목적</label>
+              <input id="bookPurposeInput" required type="text" value="전공 팀플 및 공모전 회의" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold" />
+            </div>
+            <button type="submit" class="w-full py-3.5 rounded-2xl bg-hsu-500 text-white text-xs font-extrabold shadow-md">
+              예약 확정 및 노쇼 방지 알림 켜기
+            </button>
+          </form>
+        `);
+        return;
+      }
+
+      const fac = appState.facilities.find(f => f.id === facId) || appState.facilities[0];
+      openModal(`
+        <div class="space-y-4 text-center">
+          <span class="px-2.5 py-1 rounded-lg bg-hsu-50 text-hsu-600 text-xs font-extrabold">스마트 노쇼(No-Show) 방지 리마인더</span>
+          <h3 class="text-lg font-black text-slate-900">${fac.room}</h3>
+          <p class="text-xs font-bold text-hsu-500">${fac.time} · ${fac.purpose}</p>
+
+          <!-- 모바일 QR 입실 코드 박스 -->
+          <div class="w-40 h-40 mx-auto rounded-2xl bg-slate-900 p-4 flex flex-col items-center justify-center text-white shadow-inner">
+            <i data-lucide="qr-code" class="w-24 h-24 text-white"></i>
+            <span class="text-[10px] font-bold text-blue-200 mt-1">HSU-PASS-${fac.id.toUpperCase()}</span>
+          </div>
+
+          <p class="text-[11px] text-slate-500">
+            입실 시간 15분 이내에 리더기에 QR을 스캔하거나 아래 버튼을 눌러 입실을 인증해주세요. 미입실 시 대기 학우에게 자동 양도됩니다.
+          </p>
+
+          <div class="flex gap-2">
+            <button onclick="toggleFacilityCheckin('${fac.id}')" class="flex-1 py-3.5 rounded-2xl ${fac.checkedIn ? 'bg-slate-700' : 'bg-hsu-500'} text-white text-xs font-extrabold shadow-md">
+              ${fac.checkedIn ? '입실 인증 완료됨 (상태 해제)' : '모바일 QR 입실 체크인 완료하기'}
+            </button>
+            ${appState.facilities.length > 1 ? `
+              <button onclick="cancelFacility('${fac.id}')" class="px-4 py-3.5 rounded-2xl bg-rose-50 text-rose-600 text-xs font-extrabold">
+                예약 양도/취소
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `);
+      lucide.createIcons();
+    }
+
+    function toggleFacilityCheckin(facId) {
+      const fac = appState.facilities.find(f => f.id === facId);
+      if (!fac) return;
+      fac.checkedIn = !fac.checkedIn;
+      saveState();
+      renderFacilities();
+      closeModal();
+      showToast(fac.checkedIn ? `[${fac.room}] 입실 인증 완료! 노쇼 페널티가 면제됩니다.` : '입실 전 상태로 변경되었습니다.');
+    }
+
+    function cancelFacility(facId) {
+      appState.facilities = appState.facilities.filter(f => f.id !== facId);
+      saveState();
+      renderFacilities();
+      closeModal();
+      showToast('예약이 정상 취소되어 대기 학우에게 양도되었습니다.');
+    }
+
+    function handleBookFacilitySubmit(e) {
+      e.preventDefault();
+      const room = document.getElementById('bookRoomSelect').value;
+      const time = document.getElementById('bookTimeSelect').value;
+      const purpose = document.getElementById('bookPurposeInput').value.trim();
+
+      appState.facilities.push({
+        id: 'fac_' + Date.now(),
+        room,
+        category: '스터디룸 · 실습실 예약 연동',
+        time,
+        purpose,
+        checkedIn: false
+      });
+      saveState();
+      renderFacilities();
+      closeModal();
+      showToast(`[${room}] 예약이 완료되었습니다!`);
+    }
+
+    // ============================================================================
+    // 6. [P2] 부기의 참견: 키워드 매니저 & 실시간 PUSH 알림 리스트 (PDF P.8)
+    // ============================================================================
+    function getActiveKeywords() {
+      return appState.keywordsByPersona[appState.activePersona] || ['동아리', '국가근로', '비교과'];
+    }
+
+    function renderKeywords() {
+      const keywords = getActiveKeywords();
+      const container = document.getElementById('keywordChipsContainer');
+      container.innerHTML = keywords.map(kw => `
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-hsu-500 text-white text-xs font-extrabold shadow-xs">
+          <span>#${kw}</span>
+          <button onclick="removeKeyword('${kw}')" class="hover:text-blue-200">
+            <i data-lucide="x" class="w-3 h-3"></i>
+          </button>
+        </span>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function handleAddKeyword(e) {
+      e.preventDefault();
+      const input = document.getElementById('newKeywordInput');
+      const raw = input.value.replace(/#/g, '').trim();
+      if (!raw) return;
+      quickAddKeyword(raw);
+      input.value = '';
+    }
+
+    function quickAddKeyword(kw) {
+      const list = getActiveKeywords();
+      if (!list.includes(kw)) {
+        list.push(kw);
+        appState.keywordsByPersona[appState.activePersona] = list;
+        saveState();
+        renderKeywords();
+        renderNoticeList();
+        showToast(`#${kw} 키워드가 등록되어 맞춤 공지가 실시간 필터링됩니다!`);
+      } else {
+        showToast(`#${kw} 키워드는 이미 등록되어 있습니다.`);
+      }
+    }
+
+    function removeKeyword(kw) {
+      let list = getActiveKeywords();
+      list = list.filter(item => item !== kw);
+      appState.keywordsByPersona[appState.activePersona] = list;
+      saveState();
+      renderKeywords();
+      renderNoticeList();
+      showToast(`#${kw} 키워드가 해제되었습니다.`);
+    }
+
+    function setNoticeCategory(cat) {
+      appState.noticeCategory = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        if (btn.dataset.cat === cat) {
+          btn.className = 'cat-btn px-3 py-1.5 rounded-full text-xs font-extrabold bg-hsu-500 text-white shrink-0';
+        } else {
+          btn.className = 'cat-btn px-3 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 shrink-0';
+        }
+      });
+      renderNoticeList();
+    }
+
+    function renderNoticeList() {
+      const container = document.getElementById('noticeListContainer');
+      const activeKws = getActiveKeywords();
+      const onlyMatched = document.getElementById('onlyMatchedToggle')?.checked;
+
+      let filtered = appState.notices.filter(n => {
+        if (appState.noticeCategory !== '전체' && n.category !== appState.noticeCategory) {
+          return false;
+        }
+        if (onlyMatched && activeKws.length > 0) {
+          return n.keywords.some(k => activeKws.some(ak => k.includes(ak) || ak.includes(k) || n.title.includes(ak)));
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-3xl p-8 text-center border border-slate-200/80">
+            <p class="text-xs font-extrabold text-slate-600">조건에 일치하는 키워드 공지가 없습니다.</p>
+            <p class="text-[11px] text-slate-400 mt-1">상단에서 관심 키워드를 추가하거나 '내 키워드 매칭만 보기'를 해제해보세요.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(n => `
+        <div onclick="openNoticeDetailModal('${n.id}')" class="bg-white rounded-3xl p-4 shadow-xs border border-slate-200/80 cursor-pointer hover:border-hsu-500 transition">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="inline-flex items-center gap-1 text-[11px] font-extrabold text-hsu-500">
+              <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M12 3L2 21h20L12 3z"/></svg>
+              <span>키워드 PUSH 알림</span>
+            </span>
+            <span class="text-[11px] font-bold text-slate-400">${n.timeAgo}</span>
+          </div>
+          <h3 class="text-sm font-extrabold text-slate-900 leading-snug">${n.title}</h3>
+          <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="px-2.5 py-0.5 rounded-lg bg-hsu-50 text-hsu-600 text-[11px] font-extrabold">${n.category}</span>
+              ${n.keywords.map(k => `<span class="text-[10px] font-bold text-slate-400">#${k}</span>`).join('')}
+            </div>
+            <span class="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">적합도 ${n.matchScore}%</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openNoticeDetailModal(noticeId) {
+      const n = appState.notices.find(item => item.id === noticeId);
+      if (!n) return;
+      openModal(`
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-1 rounded-lg bg-hsu-50 text-hsu-600 text-xs font-extrabold">▲ 키워드 딥 파싱 리포트 (SAVE 벤치마킹)</span>
+            <span class="text-xs font-extrabold text-emerald-600">내 프로필 적합도 ${n.matchScore}%</span>
+          </div>
+          <div>
+            <p class="text-[11px] font-bold text-slate-400">${n.department} · ${n.timeAgo}</p>
+            <h3 class="text-base font-black text-slate-900 mt-0.5 leading-snug">${n.title}</h3>
+          </div>
+          <div class="bg-[#F8FAFF] p-4 rounded-2xl border border-blue-100 space-y-2">
+            <p class="text-xs font-extrabold text-hsu-600">상상부기 AI 핵심 3줄 요약</p>
+            <ul class="space-y-1.5 text-xs text-slate-700 font-medium list-disc pl-4">
+              ${n.summary.map(line => `<li>${line}</li>`).join('')}
+            </ul>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            ${n.keywords.map(k => `<span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold">#${k}</span>`).join('')}
+          </div>
+          <div class="flex gap-2 pt-1">
+            <a href="${n.url}" target="_blank" rel="noopener noreferrer" class="flex-1 py-3.5 rounded-2xl bg-hsu-500 text-white text-center text-xs font-extrabold shadow-md">
+              교내 공지 원문 바로가기
+            </a>
+            <button onclick="closeModal(); showToast('나만의 스크랩함에 공지가 보관되었습니다.');" class="px-4 py-3.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-extrabold">
+              스크랩
+            </button>
+          </div>
+        </div>
+      `);
+    }
+
+    // 실시간 PUSH 알림 시뮬레이터 발송
+    let latestPushedNoticeId = 'n1';
+    function triggerPushNotification() {
+      const select = document.getElementById('pushPresetSelect');
+      const idx = select ? parseInt(select.value, 10) : 0;
+      const presets = [
+        {
+          title: '2027학년도 1학기 동아리 & 학습박람회 행사 안내',
+          category: '비교과·동아리',
+          keywords: ['동아리', '비교과'],
+          id: 'n1'
+        },
+        {
+          title: '2026학년도 1학기 국가근로장학금 학생 희망근로지 신청 안내',
+          category: '국가근로',
+          keywords: ['국가근로', '장학금'],
+          id: 'n2'
+        },
+        {
+          title: '제2회 한성아이디어 경진대회 본선 진출팀 발표 및 시상 안내',
+          category: '비교과·동아리',
+          keywords: ['공모전', '비교과'],
+          id: 'n4'
+        },
+        {
+          title: '성북문화원 × 한성대 지역문화 아카이빙 특별장학생 모집 공고',
+          category: '국가근로',
+          keywords: ['국가근로', '장학금'],
+          id: 'n6'
+        }
+      ];
+      const chosen = presets[idx] || presets[0];
+      latestPushedNoticeId = chosen.id;
+
+      const banner = document.getElementById('inAppPushBanner');
+      document.getElementById('pushBannerTitle').textContent = chosen.title;
+      document.getElementById('pushBannerTag').textContent = chosen.category;
+
+      banner.classList.remove('hidden', 'push-enter');
+      void banner.offsetWidth; // reflow
+      banner.classList.add('push-enter');
+
+      setTimeout(() => {
+        banner.classList.add('hidden');
+      }, 5500);
+    }
+
+    function handlePushBannerClick() {
+      document.getElementById('inAppPushBanner').classList.add('hidden');
+      startAppAndOpenTab('tab-push');
+      openNoticeDetailModal(latestPushedNoticeId);
+    }
+
+    // ============================================================================
+    // 7. [P3] 학사부기: 졸업 요건 Progress 시뮬레이터 & 상세 수업 템플릿 (PDF P.9)
+    // ============================================================================
+    function renderAcademicProgress() {
+      const p = PERSONAS[appState.activePersona] || PERSONAS.yeonseo;
+
+      // 수강 예정으로 담은 학점 합산
+      const plannedTrack1 = appState.courses
+        .filter(c => c.track === 'track1' && c.planned)
+        .reduce((acc, cur) => acc + cur.credits, 0);
+      const plannedTrack2 = appState.courses
+        .filter(c => c.track === 'track2' && c.planned)
+        .reduce((acc, cur) => acc + cur.credits, 0);
+
+      const t1Total = p.track1.current + plannedTrack1;
+      const t1Pct = Math.round((t1Total / p.track1.required) * 100);
+      const t1BarPct = Math.min(100, t1Pct);
+
+      const t2Total = p.track2.current + plannedTrack2;
+      const t2Pct = Math.round((t2Total / p.track2.required) * 100);
+      const t2BarPct = Math.min(100, t2Pct);
+
+      document.getElementById('track1Name').textContent = p.track1.name;
+      document.getElementById('track1PercentText').textContent = `전공학점(${Math.min(100, t1Pct)}%)`;
+      document.getElementById('track1CreditText').textContent = `${t1Total}/${p.track1.required}`;
+      document.getElementById('track1Bar').style.width = `${t1BarPct}%`;
+
+      const delta1El = document.getElementById('track1SimDelta');
+      if (plannedTrack1 > 0) {
+        delta1El.textContent = `+${plannedTrack1}학점 시뮬레이션 중`;
+        delta1El.classList.remove('hidden');
+      } else {
+        delta1El.classList.add('hidden');
+      }
+
+      document.getElementById('track2Name').textContent = p.track2.name;
+      document.getElementById('track2PercentText').textContent = `전공학점(${Math.min(100, t2Pct)}%)`;
+      document.getElementById('track2CreditText').textContent = `${t2Total}/${p.track2.required}`;
+      document.getElementById('track2Bar').style.width = `${t2BarPct}%`;
+
+      const delta2El = document.getElementById('track2SimDelta');
+      if (plannedTrack2 > 0) {
+        delta2El.textContent = `+${plannedTrack2}학점 시뮬레이션 중`;
+        delta2El.classList.remove('hidden');
+      } else {
+        delta2El.classList.add('hidden');
+      }
+
+      const totalSim = p.totalCredits + plannedTrack1 + plannedTrack2;
+      document.getElementById('totalCreditSummary').textContent = `${totalSim} / 130학점`;
+    }
+
+    function filterCourses(filterKey) {
+      appState.courseFilter = filterKey;
+      document.querySelectorAll('.course-filter-btn').forEach(btn => {
+        if (btn.dataset.cfilter === filterKey) {
+          btn.className = 'course-filter-btn px-3 py-1.5 rounded-full text-xs font-extrabold bg-hsu-500 text-white shrink-0';
+        } else {
+          btn.className = 'course-filter-btn px-3 py-1.5 rounded-full text-xs font-bold bg-white text-slate-600 border border-slate-200 shrink-0';
+        }
+      });
+      renderCourses();
+    }
+
+    function renderCourses() {
+      const container = document.getElementById('courseListContainer');
+      const filtered = appState.courses.filter(c => {
+        if (appState.courseFilter === 'all') return true;
+        return c.track === appState.courseFilter;
+      });
+
+      container.innerHTML = filtered.map(c => `
+        <div class="bg-white rounded-3xl p-4 shadow-xs border ${c.planned ? 'border-hsu-500 ring-2 ring-hsu-100' : 'border-slate-200/80'} transition">
+          <div class="flex items-start justify-between gap-2">
+            <div onclick="openCourseDetailModal('${c.id}')" class="flex-1 cursor-pointer">
+              <div class="flex items-center gap-1.5">
+                <h3 class="text-[15px] font-black text-slate-900 hover:text-hsu-600">${c.title}</h3>
+                <span class="px-1.5 py-0.5 rounded-md bg-hsu-50 text-hsu-600 text-[10px] font-extrabold border border-hsu-200">[${c.type}]</span>
+                <span class="text-[11px] font-bold text-slate-400">${c.credits}학점</span>
+              </div>
+              <p class="text-xs font-bold text-slate-500 mt-1">${c.room} · ${c.prof}</p>
+              <p class="text-xs font-extrabold text-hsu-500 mt-1">${c.tags}</p>
+            </div>
+            <button onclick="togglePlanCourse('${c.id}')" class="px-3 py-2 rounded-xl text-xs font-extrabold shrink-0 transition ${c.planned ? 'bg-hsu-500 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-hsu-50 hover:text-hsu-600'}">
+              ${c.planned ? '✓ 수강예정' : '+ 학점담기'}
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function togglePlanCourse(courseId) {
+      const course = appState.courses.find(c => c.id === courseId);
+      if (!course) return;
+      course.planned = !course.planned;
+      saveState();
+      renderAcademicProgress();
+      renderCourses();
+      showToast(course.planned
+        ? `[${course.title}] +${course.credits}학점이 졸업요건 Progress 바에 반영되었습니다!`
+        : `[${course.title}] 수강예정 시뮬레이션이 해제되었습니다.`
+      );
+    }
+
+    function openCourseDetailModal(courseId) {
+      const c = appState.courses.find(item => item.id === courseId);
+      if (!c) return;
+      openModal(`
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-1 rounded-lg bg-hsu-50 text-hsu-600 text-xs font-extrabold">${c.trackLabel}</span>
+            <span class="text-xs font-extrabold text-slate-500">${c.room} · ${c.credits}학점</span>
+          </div>
+          <div>
+            <h3 class="text-lg font-black text-slate-900">${c.title} [${c.type}]</h3>
+            <p class="text-xs font-bold text-hsu-500 mt-0.5">${c.tags}</p>
+          </div>
+
+          <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2 text-xs">
+            <div>
+              <span class="font-extrabold text-slate-700 block">평가 비율 템플릿</span>
+              <span class="text-slate-600">${c.evalRatio}</span>
+            </div>
+            <div class="pt-2 border-t border-slate-200/60">
+              <span class="font-extrabold text-slate-700 block">교수님 질의응답 스타일 (${c.prof})</span>
+              <span class="text-slate-600">${c.qnaStyle}</span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <p class="text-xs font-extrabold text-slate-700">선배들의 실전 수강 후기 (${c.reviews.length})</p>
+            <div class="space-y-1.5 max-h-32 overflow-y-auto no-scrollbar">
+              ${c.reviews.map(r => `
+                <div class="p-2.5 rounded-xl bg-hsu-50/60 border border-hsu-100 text-xs text-slate-700 font-medium">
+                  "${r}"
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <form onsubmit="handleAddCourseReview(event, '${c.id}')" class="flex gap-2">
+            <input id="courseReviewInput" required type="text" placeholder="이 과목 한줄 수강 팁 남기기..." class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold" />
+            <button type="submit" class="px-3.5 py-2 bg-slate-900 text-white rounded-xl text-xs font-extrabold shrink-0">등록</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function handleAddCourseReview(e, courseId) {
+      e.preventDefault();
+      const input = document.getElementById('courseReviewInput');
+      const text = input.value.trim();
+      if (!text) return;
+      const c = appState.courses.find(item => item.id === courseId);
+      if (c) {
+        c.reviews.unshift(text);
+        saveState();
+        openCourseDetailModal(courseId);
+        showToast('수강 팁이 상세 수업 템플릿에 영구 아카이빙되었습니다!');
+      }
+    }
+
+    // ============================================================================
+    // 8. [P4] 속닥부기: 팀 빌딩 & 인스타 피드 & 선배 꿀팁 아카이브 (PDF P.10)
+    // ============================================================================
+    function renderTeams() {
+      const container = document.getElementById('teamGridContainer');
+      container.innerHTML = appState.teams.map(t => `
+        <div class="bg-white rounded-3xl p-4 shadow-xs border border-slate-200/80 flex flex-col justify-between">
+          <div>
+            <div class="flex items-start justify-between gap-1">
+              <span class="text-xs font-extrabold text-slate-800 leading-tight">${t.category}</span>
+              <span class="text-xs font-black text-hsu-600 shrink-0">${t.current}/${t.max}</span>
+            </div>
+
+            <!-- 프로필 아이콘 (PDF P.10 동일 스타일) -->
+            <div class="w-14 h-14 mx-auto my-3 rounded-full border-2 border-hsu-500 bg-hsu-50/50 flex items-center justify-center text-hsu-500">
+              <i data-lucide="user-check" class="w-7 h-7"></i>
+            </div>
+
+            <p class="text-xs font-extrabold text-slate-800 text-center truncate">${t.leaderSpec}</p>
+            <p class="text-[10px] text-slate-400 text-center mt-0.5 truncate">인증: ${t.verifiedCourses[0] || '트랙인증됨'}</p>
+          </div>
+
+          <button onclick="openTeamJoinModal('${t.id}')" class="mt-3 w-full py-2 rounded-xl text-xs font-extrabold transition ${t.joined ? 'bg-emerald-500 text-white' : 'bg-hsu-500 hover:bg-hsu-600 text-white shadow-xs'}">
+            ${t.joined ? '참여 신청 완료' : '팀 참여하기'}
+          </button>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function openTeamJoinModal(teamId) {
+      const t = appState.teams.find(item => item.id === teamId);
+      const p = PERSONAS[appState.activePersona];
+      if (!t) return;
+      openModal(`
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-1 rounded-lg bg-hsu-50 text-hsu-600 text-xs font-extrabold">무임승차 방지 · 트랙 인증 매칭</span>
+            <span class="text-sm font-black text-hsu-600">모집 현황 ${t.current}/${t.max}명</span>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-slate-900">${t.category} 팀원 모집</h3>
+            <p class="text-xs font-bold text-slate-500 mt-0.5">팀장 프로필: ${t.leaderSpec}</p>
+          </div>
+          <p class="text-xs text-slate-700 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 leading-relaxed">
+            ${t.desc}
+          </p>
+          <div class="p-3.5 rounded-2xl bg-[#F8FAFF] border border-blue-200 space-y-1.5 text-xs">
+            <p class="font-extrabold text-hsu-600">자동 첨부되는 나의 인증 프로필</p>
+            <p class="text-slate-700 font-semibold">• 지원자: ${p.name} (${p.studentId} · ${p.grade})</p>
+            <p class="text-slate-700 font-semibold">• 소속 트랙: ${p.track1.name} / ${p.track2.name}</p>
+            <p class="text-slate-500 text-[11px]">• 학사부기 이수 내역이 검증 배지로 함께 전달됩니다.</p>
+          </div>
+          <button onclick="confirmJoinTeam('${t.id}')" class="w-full py-3.5 rounded-2xl ${t.joined ? 'bg-slate-600' : 'bg-hsu-500'} text-white text-xs font-extrabold shadow-md">
+            ${t.joined ? '참여 신청 취소하기' : '인증 프로필로 즉시 팀 참여하기'}
+          </button>
+        </div>
+      `);
+    }
+
+    function confirmJoinTeam(teamId) {
+      const t = appState.teams.find(item => item.id === teamId);
+      if (!t) return;
+      if (!t.joined) {
+        if (t.current < t.max) t.current += 1;
+        t.joined = true;
+        showToast(`[${t.category}] 팀에 인증 프로필로 참여 신청이 완료되었습니다!`);
+      } else {
+        t.current = Math.max(1, t.current - 1);
+        t.joined = false;
+        showToast('팀 참여 신청이 취소되었습니다.');
+      }
+      saveState();
+      renderTeams();
+      closeModal();
+    }
+
+    function openNewTeamModal() {
+      const p = PERSONAS[appState.activePersona];
+      openModal(`
+        <form onsubmit="handleCreateTeamSubmit(event)" class="space-y-4">
+          <h3 class="text-base font-black text-slate-900">캡스톤 · 공모전 팀원 모집 등록</h3>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">분야 / 공모전명</label>
+            <input id="newTeamCatInput" required type="text" placeholder="예: 캡스톤, 한성아이디어 공모전" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold" />
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">팀장 트랙/학년 (자동 인증됨)</label>
+            <input id="newTeamSpecInput" required type="text" value="기업경영트랙 / ${p.grade}" class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-700" />
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">모집 소개글</label>
+            <textarea id="newTeamDescInput" required rows="3" placeholder="찾고 있는 팀원의 트랙이나 역할을 적어주세요." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold"></textarea>
+          </div>
+          <button type="submit" class="w-full py-3.5 rounded-2xl bg-hsu-500 text-white text-xs font-extrabold shadow-md">
+            속닥부기 팀 빌딩에 게시하기
+          </button>
+        </form>
+      `);
+    }
+
+    function handleCreateTeamSubmit(e) {
+      e.preventDefault();
+      const category = document.getElementById('newTeamCatInput').value.trim();
+      const leaderSpec = document.getElementById('newTeamSpecInput').value.trim();
+      const desc = document.getElementById('newTeamDescInput').value.trim();
+
+      appState.teams.unshift({
+        id: 't_' + Date.now(),
+        category,
+        current: 1,
+        max: 4,
+        leaderSpec,
+        verifiedCourses: ['서비스운영관리 A+'],
+        desc,
+        joined: true
+      });
+      saveState();
+      renderTeams();
+      closeModal();
+      showToast(`[${category}] 팀 모집 카드가 등록되었습니다!`);
+    }
+
+    // 인스타그램 피드 모달 (P.I.G 사진동아리 & 동아리박람회)
+    function openInstaFeedModal(feedKey) {
+      const feed = INSTA_FEEDS[feedKey];
+      if (!feed) return;
+      openModal(`
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl insta-badge flex items-center justify-center text-white">
+                <i data-lucide="instagram" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <p class="text-xs font-extrabold text-slate-900">${feed.clubName}</p>
+                <p class="text-[10px] text-slate-400 font-semibold">${feed.location}</p>
+              </div>
+            </div>
+            <span class="px-2.5 py-1 rounded-full bg-pink-50 text-pink-600 text-[11px] font-extrabold">♥ ${feed.likes}</span>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+            <h3 class="text-sm font-black text-slate-900">${feed.title}</h3>
+            <p class="text-xs font-extrabold text-hsu-600">일정: ${feed.period}</p>
+            <p class="text-xs text-slate-600 leading-relaxed">${feed.caption}</p>
+            <div class="flex flex-wrap gap-1 pt-1">
+              ${feed.tags.map(tag => `<span class="text-[11px] font-bold text-hsu-500">${tag}</span>`).join(' ')}
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <button onclick="closeModal(); showToast('${feed.title} 온라인 지원서가 제출되었습니다!');" class="flex-1 py-3.5 rounded-2xl bg-hsu-500 text-white text-xs font-extrabold shadow-md">
+              앱 내에서 원스톱 지원 / 참가 신청하기
+            </button>
+            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" class="px-4 py-3.5 rounded-2xl bg-slate-100 text-slate-700 text-xs font-extrabold flex items-center">
+              인스타 이동
+            </a>
+          </div>
+        </div>
+      `);
+      lucide.createIcons();
+    }
+
+    // 선배 꿀팁 아카이브 & 자유게시판
+    function setBoardSubTab(subTab) {
+      appState.boardSubTab = subTab;
+      const tipsBtn = document.getElementById('subTabTips');
+      const freeBtn = document.getElementById('subTabFree');
+      if (subTab === 'tips') {
+        tipsBtn.className = 'text-xs font-extrabold text-hsu-600 border-b-2 border-hsu-500 pb-1';
+        freeBtn.className = 'text-xs font-bold text-slate-400 pb-1 hover:text-slate-600';
+      } else {
+        freeBtn.className = 'text-xs font-extrabold text-hsu-600 border-b-2 border-hsu-500 pb-1';
+        tipsBtn.className = 'text-xs font-bold text-slate-400 pb-1 hover:text-slate-600';
+      }
+      renderCommunityPosts();
+    }
+
+    function renderCommunityPosts() {
+      const container = document.getElementById('communityPostsContainer');
+      const q = (document.getElementById('communitySearchInput')?.value || '').trim().toLowerCase();
+
+      const filtered = appState.posts.filter(post => {
+        if (post.type !== appState.boardSubTab) return false;
+        if (q && !post.title.toLowerCase().includes(q) && !post.content.toLowerCase().includes(q) && !post.tag.toLowerCase().includes(q)) {
+          return false;
+        }
+        return true;
+      });
+
+      container.innerHTML = filtered.map(post => `
+        <div onclick="openPostDetailModal('${post.id}')" class="p-3.5 rounded-2xl bg-slate-50 hover:bg-hsu-50/50 border border-slate-200/70 cursor-pointer transition">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-md bg-white text-hsu-600 text-[10px] font-extrabold border border-hsu-100">${post.tag}</span>
+            <span class="text-[10px] font-bold text-slate-400">${post.author}</span>
+          </div>
+          <h4 class="text-xs font-extrabold text-slate-900 leading-snug">${post.title}</h4>
+          <p class="text-[11px] text-slate-500 line-clamp-2 mt-1">${post.content}</p>
+          <div class="flex items-center gap-3 mt-2 text-[10px] font-bold text-slate-400">
+            <span class="text-hsu-500">👍 추천 ${post.likes}</span>
+            <span>🔖 영구보존 스크랩 ${post.scraps}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openPostDetailModal(postId) {
+      const post = appState.posts.find(p => p.id === postId);
+      if (!post) return;
+      openModal(`
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-1 rounded-lg bg-hsu-50 text-hsu-600 text-xs font-extrabold">${post.tag}</span>
+            <span class="text-xs font-bold text-slate-400">${post.author}</span>
+          </div>
+          <h3 class="text-base font-black text-slate-900 leading-snug">${post.title}</h3>
+          <p class="text-xs text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-200/80 leading-relaxed">
+            ${post.content}
+          </p>
+          <div class="flex gap-2">
+            <button onclick="upvotePost('${post.id}')" class="flex-1 py-3 rounded-xl bg-hsu-500 text-white text-xs font-extrabold">
+              👍 유용해요 추천 (${post.likes})
+            </button>
+            <button onclick="closeModal(); showToast('내 아카이브에 영구 스크랩되었습니다.');" class="px-4 py-3 rounded-xl bg-slate-100 text-slate-700 text-xs font-extrabold">
+              🔖 스크랩 (${post.scraps})
+            </button>
+          </div>
+        </div>
+      `);
+    }
+
+    function upvotePost(postId) {
+      const post = appState.posts.find(p => p.id === postId);
+      if (!post) return;
+      post.likes += 1;
+      saveState();
+      renderCommunityPosts();
+      openPostDetailModal(postId);
+      showToast('추천이 반영되었습니다!');
+    }
+
+    function openNewPostModal() {
+      const p = PERSONAS[appState.activePersona];
+      openModal(`
+        <form onsubmit="handleNewPostSubmit(event)" class="space-y-4">
+          <h3 class="text-base font-black text-slate-900">속닥부기 새 글 작성</h3>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">게시판 분류</label>
+            <select id="newPostTypeSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold">
+              <option value="tips">선배 꿀팁 노하우 아카이브 (영구 보존)</option>
+              <option value="free">통합 자유게시판</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">해시태그</label>
+            <input id="newPostTagInput" required type="text" value="#트랙꿀팁" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold" />
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">제목</label>
+            <input id="newPostTitleInput" required type="text" placeholder="학우들에게 공유할 내용을 입력하세요" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold" />
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-600 block mb-1">본문 내용</label>
+            <textarea id="newPostContentInput" required rows="3" placeholder="수강 경험이나 캠퍼스 팁을 자유롭게 작성해주세요." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold"></textarea>
+          </div>
+          <button type="submit" class="w-full py-3.5 rounded-2xl bg-hsu-500 text-white text-xs font-extrabold shadow-md">
+            속닥부기에 등록하기 (${p.name} 인증)
+          </button>
+        </form>
+      `);
+    }
+
+    function handleNewPostSubmit(e) {
+      e.preventDefault();
+      const p = PERSONAS[appState.activePersona];
+      const type = document.getElementById('newPostTypeSelect').value;
+      const tag = document.getElementById('newPostTagInput').value.trim();
+      const title = document.getElementById('newPostTitleInput').value.trim();
+      const content = document.getElementById('newPostContentInput').value.trim();
+
+      appState.posts.unshift({
+        id: 'p_' + Date.now(),
+        type,
+        tag: tag.startsWith('#') ? tag : '#' + tag,
+        title,
+        author: `${p.name} (${p.grade} · 인증됨)`,
+        likes: 1,
+        scraps: 0,
+        content
+      });
+      saveState();
+      setBoardSubTab(type);
+      closeModal();
+      showToast('게시글이 속닥부기에 등록되었습니다!');
+    }
+
+    // ============================================================================
+    // 9. GitHub 업로드 & 배포 가이드 모달 + 기획서 요약 모달
+    // ============================================================================
+    function openGithubGuideModal() {
+      openModal(`
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-extrabold">GitHub Pages / Netlify 즉시 배포 가능</span>
+            <span class="text-xs font-bold text-hsu-600">Single-File Web App</span>
+          </div>
+          <h3 class="text-base font-black text-slate-900">GitHub 저장소 구성 및 실제 웹앱 배포 방법</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            현재 보고 계신 코드는 외부 이미지 깨짐 없이 모든 SVG 그래픽(상상부기, P.I.G 포스터, 박람회 포스터)과 상호작용 로직이 <strong>단 하나의 <code>index.html</code></strong>로 완결되어 있어 GitHub에 올리는 즉시 실제 웹앱으로 작동합니다.
+          </p>
+          <div class="bg-slate-900 text-slate-100 p-4 rounded-2xl text-[11px] font-mono space-y-1.5 overflow-x-auto">
+            <p class="text-emerald-400"># 1. 내 컴퓨터 폴더에 index.html 저장 후 터미널 실행</p>
+            <p>git init</p>
+            <p>git add index.html</p>
+            <p>git commit -m "feat: SACSACBUGI v1.9.2 interactive web app"</p>
+            <p>git branch -M main</p>
+            <p>git remote add origin https://github.com/내아이디/sacsacbugi.git</p>
+            <p>git push -u origin main</p>
+          </div>
+          <div class="bg-hsu-50 p-3.5 rounded-2xl border border-hsu-200 text-xs text-slate-700 space-y-1">
+            <p class="font-extrabold text-hsu-700">🌐 GitHub Pages 무료 호스팅 켜기 (1분 소요)</p>
+            <p>1. GitHub 저장소 상단 <strong>[Settings] → 좌측 [Pages]</strong> 클릭</p>
+            <p>2. Branch를 <strong>main / (root)</strong>로 선택 후 <strong>[Save]</strong> 클릭</p>
+            <p>3. 생성된 URL 접속 또는 QR코드로 모바일 기기에서 즉시 시연!</p>
+          </div>
+          <button onclick="closeModal()" class="w-full py-3 rounded-2xl bg-slate-900 text-white text-xs font-extrabold">
+            확인 완료
+          </button>
+        </div>
+      `);
+    }
+
+    function openReportOverviewModal() {
+      openModal(`
+        <div class="space-y-4">
+          <span class="px-2.5 py-1 rounded-lg bg-hsu-50 text-hsu-600 text-xs font-extrabold">제2회 한성아이디어 경진대회 제안 요약</span>
+          <h3 class="text-base font-black text-slate-900">싹싹부기 (SACSACBUGI VER.1.9.2)</h3>
+          <div class="space-y-2.5 text-xs text-slate-700">
+            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+              <strong class="text-hsu-600 block">1. 문제인식 (Problem)</strong>
+              파편화된 교내 채널(홈페이지, HIGH, 인스타), 무분별한 획일적 전체 공지로 인한 피로도, 학우 간 소통 단절 해결
+            </div>
+            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+              <strong class="text-hsu-600 block">2. 핵심 솔루션 (ALL IN ONE & ONLY FOR ME)</strong>
+              주식 뉴스 앱 'SAVE'의 관심종목 알림을 벤치마킹한 <strong>키워드 딥파싱 PUSH 알림</strong> 및 4대 핵심 탭(오늘의 부기·부기의 참견·학사부기·속닥부기) 통합
+            </div>
+            <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+              <strong class="text-hsu-600 block">3. 경쟁 서비스 차별점 (vs 에브리타임, 헤이영)</strong>
+              휘발성 익명 글 대신 전공 팁의 영구 자산화, 트랙/이수과목 인증 기반 안전한 팀 빌딩, 스터디룸 노쇼 방지 리마인더 제공
+            </div>
+          </div>
+          <button onclick="closeModal(); startApp();" class="w-full py-3.5 rounded-2xl bg-hsu-500 text-white text-xs font-extrabold">
+            웹앱 시연 시작하기
+          </button>
+        </div>
+      `);
+    }
+
+    // ============================================================================
+    // 10. 공통 모달 & 토스트 유틸리티
+    // ============================================================================
+    function openModal(htmlContent) {
+      const overlay = document.getElementById('modalOverlay');
+      const content = document.getElementById('modalContent');
+      content.innerHTML = htmlContent;
+      overlay.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.add('hidden');
+    }
+
+    function closeModalOnBg(e) {
+      if (e.target.id === 'modalOverlay') {
+        closeModal();
+      }
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById('toastMsg');
+      document.getElementById('toastText').textContent = msg;
+      toast.classList.remove('hidden');
+      lucide.createIcons();
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 2800);
+    }
+
+    // 초기화 실행
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      renderAll();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
